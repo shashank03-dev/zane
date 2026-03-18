@@ -134,6 +134,19 @@ pip install -r requirements.txt
 python -c "import torch; print(torch.cuda.is_available())"
 ```
 
+### Optional Multi-Language Accelerator (Go)
+
+ZANE includes an optional Go backend for faster web search retrieval in synthesis workflows.
+
+Build the Go helper:
+
+```bash
+make build-go-fastsearch
+export ZANE_GO_SEARCH_BIN="$PWD/tools/bin/zane-fastsearch"
+```
+
+This binary is used by synthesis research flows as a fast fallback when Google CSE is not configured.
+
 ## 6. Quick Start
 
 ### Train a Baseline Model
@@ -174,6 +187,18 @@ python -m drug_discovery.cli dashboard --static
 
 ```bash
 python -m drug_discovery.cli dashboard --refresh 1.0 --iterations 60
+```
+
+### Synthesis Research (Internet + AI)
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --target EGFR --max-results 5
+```
+
+Offline-safe mode:
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --no-internet --no-ai
 ```
 
 ### Operational Notes

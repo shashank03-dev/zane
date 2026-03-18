@@ -3,9 +3,14 @@ Biomedical Web Scraping and Data Ingestion
 Collects data from PubMed, bioRxiv, clinical trials, patents
 """
 
+import json
 import logging
+import os
+import re
+import subprocess
 import time
 from datetime import datetime, timedelta
+from typing import Any
 
 import requests
 
@@ -267,3 +272,178 @@ class WebDataProcessor:
 
         logger.info(f"Quality filter: {len(articles)} → {len(filtered)}")
         return filtered
+
+
+class InternetSearchClient:
+    """
+    Internet search client for synthesis research support.
+
+    Supports Google Programmable Search (when configured) with a DuckDuckGo fallback.
+    """
+
+    def __init__(
+        self,
+        google_api_key: str | None = None,
+        google_cse_id: str | None = None,
+        go_search_bin: str | None = None,
+    ):
+        self.google_api_key = google_api_key or os.getenv("GOOGLE_CSE_API_KEY")
+        self.google_cse_id = google_cse_id or os.getenv("GOOGLE_CSE_ID")
+        self.go_search_bin = go_search_bin or os.getenv("ZANE_GO_SEARCH_BIN")
+
+    def search_web(self, query: str, max_results: int = 5, prefer_google: bool = True) -> list[dict[str, str]]:
+        if not query.strip():
+            return []
+
+        if prefer_google and self.google_api_key and self.google_cse_id:
+            results = self._google_search(query=query, max_results=max_results)
+            if results:
+                return results
+
+        go_results = self._go_fast_search(query=query, max_results=max_results)
+        if go_results:
+            return go_results
+
+        return self._duckduckgo_search(query=query, max_results=max_results)
+
+    def _go_fast_search(self, query: str, max_results: int = 5) -> list[dict[str, str]]:
+        if not self.go_search_bin:
+            return []
+
+        try:
+            command = [
+                self.go_search_bin,
+                "--query",
+                query,
+                "--max-results",
+                str(max(1, max_results)),
+            ]
+            result = subprocess.run(command, capture_output=True, text=True, timeout=20, check=True)
+            payload = json.loads(result.stdout)
+
+            if not isinstance(payload, list):
+                return []
+
+            normalized: list[dict[str, str]] = []
+            for item in payload:
+                if not isinstance(item, dict):
+                    continue
+
+                normalized.append(
+                    {
+                        "title": str(item.get("title", "")),
+                        "url": str(item.get("url", "")),
+                        "snippet": str(item.get("snippet", "")),
+                        "source": str(item.get("source", "go-fastsearch")),
+                    }
+                )
+
+            return normalized
+        except Exception as exc:
+            logger.warning(f"Go fast search backend unavailable, using Python fallback: {exc}")
+            return []
+
+    def _google_search(self, query: str, max_results: int = 5) -> list[dict[str, str]]:
+        try:
+            response = requests.get(
+                "https://www.googleapis.com/customsearch/v1",
+                params={
+                    "key": self.google_api_key,
+                    "cx": self.google_cse_id,
+                    "q": query,
+                    "num": max(1, min(max_results, 10)),
+                },
+                timeout=15,
+            )
+            response.raise_for_status()
+            data: dict[str, Any] = response.json()
+            items = data.get("items", [])
+
+            results: list[dict[str, str]] = []
+            for item in items:
+                results.append(
+                    {
+                        "title": str(item.get("title", "")),
+                        "url": str(item.get("link", "")),
+                        "snippet": str(item.get("snippet", "")),
+                        "source": "google-cse",
+                    }
+                )
+            return results
+        except Exception as exc:
+            logger.warning(f"Google search failed, falling back to DuckDuckGo: {exc}")
+            return []
+
+    def _duckduckgo_search(self, query: str, max_results: int = 5) -> list[dict[str, str]]:
+        try:
+            response = requests.get(
+                "https://duckduckgo.com/html/",
+                params={"q": query},
+                timeout=15,
+                headers={"User-Agent": "Mozilla/5.0"},
+            )
+            response.raise_for_status()
+
+            html = response.text
+            pattern = re.compile(r'<a[^>]*class="result__a"[^>]*href="([^"]+)"[^>]*>(.*?)</a>', re.IGNORECASE)
+            matches = pattern.findall(html)
+
+            results: list[dict[str, str]] = []
+            for href, title in matches[: max(1, max_results)]:
+                cleaned_title = re.sub(r"<[^>]+>", "", title)
+                results.append(
+                    {
+                        "title": cleaned_title,
+                        "url": href,
+                        "snippet": "",
+                        "source": "duckduckgo",
+                    }
+                )
+
+            return results
+        except Exception as exc:
+            logger.error(f"DuckDuckGo search failed: {exc}")
+            return []
+
+
+class AISynthesisChat:
+    """AI chat helper for synthesis strategy generation."""
+
+    def __init__(self, model_id: str = "meta-llama/Llama-3.2-1B-Instruct"):
+        self.model_id = model_id
+
+    def generate_synthesis_brief(
+        self,
+        smiles: str,
+        target_protein: str | None = None,
+        research_hits: list[dict[str, str]] | None = None,
+    ) -> dict[str, str]:
+        from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
+
+        context_lines = [f"Molecule SMILES: {smiles}"]
+        if target_protein:
+            context_lines.append(f"Target protein: {target_protein}")
+
+        if research_hits:
+            context_lines.append("Relevant web research:")
+            for idx, hit in enumerate(research_hits[:5], 1):
+                title = hit.get("title", "Unknown")
+                url = hit.get("url", "")
+                context_lines.append(f"{idx}. {title} ({url})")
+
+        prompt = (
+            "Provide a concise medicinal chemistry synthesis strategy with: "
+            "(1) route ideas, (2) risk points, (3) building block suggestions, "
+            "and (4) immediate next experiments."
+        )
+
+        assistant = LlamaSupportAssistant(config=AISupportConfig(model_id=self.model_id))
+        response = assistant.respond(
+            user_prompt=prompt,
+            context="\n".join(context_lines),
+            max_new_tokens=300,
+            temperature=0.5,
+            top_p=0.9,
+        )
+
+        return {"model_id": self.model_id, "brief": response}

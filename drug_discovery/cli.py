@@ -3,12 +3,14 @@ Command-line interface for Drug Discovery Platform
 """
 
 import argparse
+import json
 import sys
 
 from drug_discovery import DrugDiscoveryPipeline
-from drug_discovery.ai_support import LlamaSupportAssistant
+from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
 from drug_discovery.dashboard import run_dashboard
 from drug_discovery.evaluation import ADMETPredictor
+from drug_discovery.synthesis import RetrosynthesisPlanner
 
 
 def main():
@@ -57,6 +59,17 @@ def main():
     support_parser.add_argument("--temperature", type=float, default=0.7)
     support_parser.add_argument("--top-p", type=float, default=0.9)
 
+    # Synthesis research command (internet + AI)
+    synth_parser = subparsers.add_parser(
+        "synthesis-research", help="Plan synthesis with internet research and AI guidance"
+    )
+    synth_parser.add_argument("smiles", help="Target molecule SMILES")
+    synth_parser.add_argument("--target", default=None, help="Optional target protein")
+    synth_parser.add_argument("--max-depth", type=int, default=5)
+    synth_parser.add_argument("--max-results", type=int, default=5)
+    synth_parser.add_argument("--no-internet", action="store_true", help="Disable internet research")
+    synth_parser.add_argument("--no-ai", action="store_true", help="Disable AI synthesis guidance")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -71,6 +84,8 @@ def main():
         show_dashboard(args)
     elif args.command == "assist":
         run_ai_support(args)
+    elif args.command == "synthesis-research":
+        run_synthesis_research(args)
     else:
         parser.print_help()
 
@@ -168,8 +183,7 @@ def show_dashboard(args):
 
 def run_ai_support(args):
     """Generate AI support response using Meta Llama."""
-    assistant = LlamaSupportAssistant()
-    assistant.config.model_id = args.model_id
+    assistant = LlamaSupportAssistant(config=AISupportConfig(model_id=args.model_id))
 
     try:
         response = assistant.respond(
@@ -179,12 +193,28 @@ def run_ai_support(args):
             temperature=args.temperature,
             top_p=args.top_p,
         )
-    except RuntimeError as exc:
+    except (RuntimeError, ValueError) as exc:
         print(f"Error: {exc}")
         sys.exit(1)
 
     print("\nZANE AI Support Response:\n")
     print(response)
+
+
+def run_synthesis_research(args):
+    """Plan synthesis with internet research and optional AI guidance."""
+    planner = RetrosynthesisPlanner()
+    result = planner.plan_synthesis_with_research(
+        target_smiles=args.smiles,
+        target_protein=args.target,
+        max_depth=args.max_depth,
+        max_research_results=args.max_results,
+        use_internet=not args.no_internet,
+        use_ai_chat=not args.no_ai,
+    )
+
+    print("\nSynthesis Research Result:\n")
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

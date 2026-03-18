@@ -1,489 +1,481 @@
-# ZANE Technical Documentation
+# ZANE Ultra Technical Documentation
 
-Comprehensive technical reference for the ZANE autonomous AI drug discovery platform.
+Comprehensive engineering and scientific documentation for the ZANE autonomous AI drug discovery platform.
 
-## Document Control
+## Document Metadata
 
-- Product: ZANE
+- Project: ZANE
 - Repository: cosmic-hydra/zane
-- Audience: ML engineers, computational chemists, platform engineers, researchers
-- Scope: architecture, module behavior, operations, workflows, quality gates, and troubleshooting
+- Branch baseline: main
+- Primary audience: ML engineers, MLOps engineers, computational chemists, research scientists
+- Secondary audience: platform developers, pipeline maintainers, QA/DevSecOps contributors
 
 ## Table of Contents
 
-1. Introduction
-2. Platform Goals and Non-Goals
-3. Conceptual Architecture
-4. Runtime Data Flow
-5. Package and Module Reference
-6. Core Pipeline API
-7. Data Layer
-8. Modeling Layer
-9. Training Layer
-10. Evaluation Layer
-11. Optimization Layer
-12. Physics Layer
-13. Synthesis Layer
-14. Multi-Agent Orchestration
-15. Command-Line Interface
-16. Dashboard Operations
-17. AI Support Integration (Meta Llama)
-18. Experiment Design and Runbook
-19. Artifact and Output Management
-20. Configuration Strategy
-21. Validation, Testing, and Quality Controls
-22. CI/CD Practices
-23. Security and Responsible Research Use
-24. Performance and Scaling Guidance
-25. Deployment Considerations
-26. Failure Modes and Troubleshooting
-27. Extension Guide
-28. Contribution Workflow
-29. FAQ
-30. License
-
-## 1. Introduction
-
-ZANE is an integrated computational drug discovery platform that combines molecular data ingestion, machine learning prediction, simulation-informed triage, and operational observability.
-
-Unlike isolated scripts and disconnected tools, ZANE provides a coherent workflow where each phase can produce reproducible artifacts and feed downstream decision logic.
-
-### Intended Usage
-
-- Rapid prototyping of molecular screening workflows
-- Model-centric candidate ranking and analysis
-- Team-based research operations with shared conventions
-- AI-assisted planning and interpretation support
-
-### Out of Scope
-
-- Clinical decision support in regulated production settings
-- Direct replacement for wet-lab validation
-- Regulatory-grade safety claims without additional validation systems
-
-## 2. Platform Goals and Non-Goals
-
-### Goals
-
-- Modular, extensible architecture for scientific iteration
-- Reproducible workflows with explicit outputs
-- Practical CLI-first operations
-- Strong documentation and quality controls
-- Support for both baseline and advanced model experimentation
-
-### Non-Goals
-
-- Monolithic, hard-to-extend architecture
-- Hidden side effects in core workflow execution
-- Over-optimized assumptions for one domain only
-
-## 3. Conceptual Architecture
-
-ZANE follows a layered architecture to separate concerns and reduce coupling.
-
-- Interface Layer
-  - Command-line interface
-  - Terminal dashboard
-- Orchestration Layer
-  - Main pipeline orchestration
-  - Multi-agent flow control
-- Intelligence Layer
-  - Property prediction models
-  - ADMET and scoring evaluators
-  - Optimization engines
-- Scientific Layer
-  - Docking and molecular dynamics
-  - Retrosynthesis and synthesis feasibility
-- Data Layer
-  - Data collection adapters
-  - Featurization and dataset preparation
-- Platform Layer
-  - Tests, linting, CI, package metadata
-
-## 4. Runtime Data Flow
-
-Standard execution pattern:
-
-1. Acquire molecules from configured sources.
-2. Normalize and deduplicate records.
-3. Convert molecular records into model-ready features.
-4. Split data into train and validation subsets.
-5. Train selected architecture.
-6. Evaluate predictive behavior and reliability.
-7. Score candidate molecules with ADMET and optional simulation signals.
-8. Rank and export outputs for human review.
-9. Observe progress and health via terminal dashboard.
-
-## 5. Package and Module Reference
-
-Primary package: `drug_discovery`
-
-### Top-Level Modules
-
-- `pipeline.py`: orchestration of end-to-end discovery lifecycle
-- `cli.py`: command-line entrypoint and task routing
-- `dashboard.py`: terminal UI for operational monitoring
-- `ai_support.py`: Meta Llama integration for assistant tasks
-
-### Subpackages
-
-- `data`: collection, featurization, dataset management
-- `models`: GNN, transformer, ensemble, equivariant models
-- `training`: trainer and learning loops
-- `evaluation`: predictor and scoring logic
-- `optimization`: Bayesian and multi-objective optimization
-- `physics`: docking and MD simulation components
-- `synthesis`: retrosynthesis utilities
-- `knowledge_graph`: graph data abstractions
-- `agents`: orchestration agents for discovery cycles
-- `web_scraping`: domain data scraping helpers
-
-## 6. Core Pipeline API
-
-Main orchestrator: `DrugDiscoveryPipeline`
-
-### Constructor Inputs
-
-- `model_type`: `gnn`, `transformer`, or `ensemble`
-- `device`: compute target, typically `cpu` or `cuda`
-- `cache_dir`: cache location for collected datasets
-- `checkpoint_dir`: model checkpoint output path
-
-### Core Methods
-
-- `collect_data(sources, limit_per_source)`
-  - Retrieves data from selected sources and merges results.
-- `prepare_datasets(data, smiles_col, target_col, test_size, batch_size)`
-  - Builds train/test loaders based on featurization mode.
-- `build_model(**model_kwargs)`
-  - Instantiates model architecture according to model type.
-- `train(train_loader, val_loader, num_epochs, learning_rate, **trainer_kwargs)`
-  - Trains and returns training history.
-- `predict_properties(smiles, include_admet)`
-  - Produces property and optional ADMET outputs for one molecule.
-- `generate_candidates(target_protein, num_candidates, filter_criteria)`
-  - Produces candidate list with attached predictions.
-- `evaluate(test_loader, is_graph)`
-  - Runs evaluator metrics from model predictions.
-- `save(filepath)` and `load(filepath)`
-  - Persists and restores pipeline state.
-
-## 7. Data Layer
-
-### Data Sources
-
-Current collection pathways include:
-
-- PubChem
-- ChEMBL
-- Approved-drug collections
-
-### Data Responsibilities
-
-- Query external sources
-- Normalize schema
-- Deduplicate molecular records
-- Persist cached outputs for repeatability
-
-### Featurization Pathways
-
-- Graph-based featurization for GNN workflows
-- Fingerprint/descriptor pathway for transformer or non-graph pipelines
-
-### Dataset Construction
-
-`MolecularDataset` provides sample retrieval behavior compatible with pipeline loaders.
-
-## 8. Modeling Layer
-
-### Supported Model Types
-
-- Graph Neural Network (`MolecularGNN`)
-- Transformer (`MolecularTransformer`)
-- Ensemble (`EnsembleModel`)
-
-### Model Selection Guidance
-
-- Use GNN when molecular structural topology is central.
-- Use transformer for sequence/fingerprint-heavy workflows.
-- Use ensemble when improving robustness across biases.
-
-### Extensibility Notes
-
-To add a new architecture:
-
-1. Implement model class in `models`.
-2. Add factory logic in pipeline model builder.
-3. Ensure trainer compatibility for batch format.
-4. Add tests for forward pass and integration path.
-
-## 9. Training Layer
-
-Training relies on `SelfLearningTrainer` for fit/predict loop behavior.
-
-### Typical Training Controls
-
-- Number of epochs
-- Learning rate
-- Device placement
-- Checkpoint save directory
-
-### Expected Outputs
-
-- Train and validation loss history
-- Best checkpoint artifact
-- Trained model attached to pipeline state
-
-### Best Practices
-
-- Track fixed splits for fair model comparisons.
-- Run short smoke epochs before long jobs.
-- Validate model outputs on a stable holdout set.
-
-## 10. Evaluation Layer
-
-Evaluation utilities provide both pure model metrics and drug-centric indicators.
-
-### Model Metrics
-
-- Regression metrics (for property prediction tasks)
-- Consistency checks between predicted and observed values
-
-### ADMET and Drug-Likeness
-
-Via `ADMETPredictor`, common checks include:
-
-- Lipinski rule assessment
-- QED estimation
-- Synthetic accessibility scoring
-- Toxicity-flag heuristics
-
-## 11. Optimization Layer
-
-Optimization modules support candidate improvement and trade-off management.
-
-- Bayesian optimization primitives
-- Multi-objective optimization support
-
-Use this layer when balancing competing objectives such as potency, synthetic feasibility, and safety proxies.
-
-## 12. Physics Layer
-
-Physics modules provide complementary evidence for model-driven ranking.
-
-### Components
-
-- Docking interfaces and scoring utilities
-- Molecular dynamics simulation functions
-
-### Use Cases
-
-- Prioritization refinement after ML ranking
-- Stability sanity checks
-- Secondary evidence generation for shortlist review
-
-## 13. Synthesis Layer
-
-Synthesis modules provide feasibility-aware signals.
-
-### Responsibilities
-
-- Retrosynthesis planning scaffolding
-- Route feasibility support
-- Chemistry-aware candidate triage
-
-## 14. Multi-Agent Orchestration
-
-`agents/orchestrator.py` implements role-based agent flow.
-
-### Agent Roles
-
-- Generator agent
-- Evaluator agent
-- Planner agent
-- Optimizer agent
-
-### Workflow Pattern
-
-1. Generate candidates
-2. Evaluate by selected criteria
-3. Plan experiment subset
-4. Optimize final shortlist
-
-## 15. Command-Line Interface
-
-CLI entry module: `python -m drug_discovery.cli`
-
-### `train`
-
-Train a model from collected data.
-
-Example:
-
-```bash
-python -m drug_discovery.cli train --model transformer --epochs 20 --batch-size 32
+1. Executive Overview
+2. Product Objectives and Scope
+3. Architecture Overview
+4. Layer-by-Layer Deep Dive
+5. Repository Trees and Module Maps
+6. End-to-End Data and Decision Flow
+7. Data Ingestion and Web Intelligence
+8. Modeling and Prediction Stack
+9. Retrosynthesis and Synthesis Feasibility
+10. Internet Research and AI Chat for Synthesis
+11. Optimization Strategies
+12. Dashboard Operations and Monitoring
+13. CLI Operations Manual
+14. API and Object Reference
+15. CI/CD and Security Pipeline Design
+16. Testing and Quality Assurance
+17. Experiment Management and Reproducibility
+18. Performance Engineering
+19. Reliability and Failure Recovery
+20. Security and Responsible Use
+21. Deployment and Environment Strategy
+22. Extension Patterns and Plugin Concepts
+23. Troubleshooting Playbook
+24. Contribution and Review Standards
+25. Appendix (Diagrams, Trees, and Examples)
+26. License
+
+## 1. Executive Overview
+
+ZANE is a modular system that combines:
+
+- molecular data collection
+- cheminformatics featurization
+- ML model training and inference
+- ADMET and quality scoring
+- retrosynthesis-informed triage
+- internet-assisted research enrichment
+- LLM-based synthesis chat support
+- terminal-native operational dashboards
+
+The platform is designed to reduce the gap between raw molecular datasets and actionable candidate prioritization.
+
+## 2. Product Objectives and Scope
+
+### 2.1 Objectives
+
+- Make drug discovery workflows reproducible and scriptable.
+- Provide practical defaults for teams without sacrificing extensibility.
+- Enable internet-backed synthesis research for rapid context gathering.
+- Support AI-assisted synthesis strategy drafting with clear guardrails.
+- Maintain CI/CD quality and security checks without frequent false failures.
+
+### 2.2 In Scope
+
+- Scientific data pipeline automation
+- Model training and candidate ranking
+- Retrosynthesis planning support
+- Security scan integration in CI/CD
+
+### 2.3 Out of Scope
+
+- Clinical decision automation
+- Regulatory submission tooling
+- Guaranteed synthetic route correctness without expert review
+
+## 3. Architecture Overview
+
+### 3.1 High-Level Architecture Diagram
+
+```mermaid
+flowchart TD
+    A[Data Sources\nPubChem ChEMBL Web Research] --> B[Data Collection Layer]
+    B --> C[Featurization and Dataset Layer]
+    C --> D[Model Layer\nGNN Transformer Ensemble]
+    D --> E[Evaluation Layer\nADMET Property Scores]
+    E --> F[Synthesis Layer\nRetrosynthesis Feasibility]
+    F --> G[Research Enrichment\nInternet Search + AI Chat]
+    G --> H[Candidate Prioritization]
+    H --> I[CLI + Dashboard + Artifacts]
 ```
 
-### `predict`
+### 3.2 Runtime Interaction Diagram
 
-Predict properties for one molecule using a checkpoint.
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant CLI as CLI
+    participant P as Pipeline
+    participant W as Web Search
+    participant L as Llama AI
+    participant D as Dashboard
 
-Example:
-
-```bash
-python -m drug_discovery.cli predict "CC(=O)OC1=CC=CC=C1C(=O)O" \
-  --model gnn \
-  --checkpoint ./checkpoints/gnn_model.pt
+    U->>CLI: run synthesis-research
+    CLI->>P: plan_synthesis_with_research(smiles)
+    P->>W: search_web(query)
+    W-->>P: research_hits
+    P->>L: generate_synthesis_brief(context)
+    L-->>P: ai_guidance
+    P-->>CLI: enriched_plan
+    CLI-->>U: JSON result
+    U->>D: dashboard view
 ```
 
-### `admet`
+## 4. Layer-by-Layer Deep Dive
 
-Run ADMET-focused analysis for one molecule.
+### 4.1 Interface Layer
 
-Example:
+Responsibilities:
+
+- expose consistent CLI commands
+- provide operational dashboard views
+- format outputs for both humans and automation
+
+Key files:
+
+- `drug_discovery/cli.py`
+- `drug_discovery/dashboard.py`
+
+### 4.2 Orchestration Layer
+
+Responsibilities:
+
+- coordinate model training and prediction phases
+- orchestrate synthesis planning and scoring
+- compose enriched outputs from multiple subsystems
+
+Key files:
+
+- `drug_discovery/pipeline.py`
+- `drug_discovery/agents/orchestrator.py`
+
+### 4.3 Intelligence Layer
+
+Responsibilities:
+
+- train and evaluate predictive models
+- produce property and ADMET outputs
+- support score aggregation and optimization
+
+Key files:
+
+- `drug_discovery/models/*`
+- `drug_discovery/evaluation/*`
+- `drug_discovery/optimization/*`
+
+### 4.4 Scientific Layer
+
+Responsibilities:
+
+- docking and molecular dynamics utilities
+- retrosynthesis planning and synthetic accessibility
+- feasibility-oriented ranking support
+
+Key files:
+
+- `drug_discovery/physics/*`
+- `drug_discovery/synthesis/*`
+
+### 4.5 Data Layer
+
+Responsibilities:
+
+- source collection and normalization
+- quality filtering and deduplication
+- feature generation for model compatibility
+
+Key files:
+
+- `drug_discovery/data/*`
+- `drug_discovery/web_scraping/*`
+
+## 5. Repository Trees and Module Maps
+
+### 5.1 Top-Level Repository Tree
+
+```text
+zane/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── configs/
+│   └── config.py
+├── drug_discovery/
+│   ├── agents/
+│   ├── data/
+│   ├── evaluation/
+│   ├── knowledge_graph/
+│   ├── models/
+│   ├── optimization/
+│   ├── physics/
+│   ├── synthesis/
+│   ├── training/
+│   ├── web_scraping/
+│   ├── ai_support.py
+│   ├── cli.py
+│   ├── dashboard.py
+│   └── pipeline.py
+├── tests/
+├── README.md
+├── DOCUMENTATION.md
+├── requirements.txt
+└── requirements-all.txt
+```
+
+### 5.2 Synthesis and Research Subtree
+
+```text
+drug_discovery/
+├── synthesis/
+│   ├── __init__.py
+│   └── retrosynthesis.py
+└── web_scraping/
+    ├── __init__.py
+    └── scraper.py
+```
+
+## 6. End-to-End Data and Decision Flow
+
+1. Collect molecular records and references.
+2. Featurize into graph/fingerprint representations.
+3. Train selected architecture.
+4. Evaluate model outputs with ADMET checks.
+5. Plan synthesis and estimate feasibility.
+6. Enrich synthesis with internet search evidence.
+7. Draft AI synthesis guidance using Llama.
+8. Combine evidence into prioritized candidate decisions.
+9. Persist artifacts and monitor via dashboard.
+
+## 7. Data Ingestion and Web Intelligence
+
+### 7.1 Biomedical Scraping
+
+The scraper module supports publication and trial data collection with quality filtering and deduplication helpers.
+
+### 7.2 Internet Search Support
+
+`InternetSearchClient` supports:
+
+- Google Programmable Search when keys are configured
+- Go fast-search backend for compiled high-performance retrieval
+- DuckDuckGo HTML fallback when Google is unavailable
+
+Environment variables:
+
+- `GOOGLE_CSE_API_KEY`
+- `GOOGLE_CSE_ID`
+- `ZANE_GO_SEARCH_BIN`
+
+### 7.4 Multi-Language Search Backend (Go)
+
+ZANE is no longer Python-only in its runtime strategy.
+
+The Go component at `tools/go/fastsearch/main.go` provides:
+
+- compiled execution for lower overhead in repeated lookups
+- deterministic JSON output for Python interoperability
+- URL normalization for DuckDuckGo redirect links
+
+Build command:
 
 ```bash
+make build-go-fastsearch
+```
+
+Activation:
+
+```bash
+export ZANE_GO_SEARCH_BIN="$PWD/tools/bin/zane-fastsearch"
+```
+
+Direct usage example:
+
+```bash
+tools/bin/zane-fastsearch --query "EGFR inhibitor synthesis route" --max-results 5
+```
+
+### 7.3 Search Output Structure
+
+Search results are normalized into dictionaries containing:
+
+- `title`
+- `url`
+- `snippet`
+- `source`
+
+## 8. Modeling and Prediction Stack
+
+Supported model families:
+
+- molecular GNN
+- molecular transformer
+- ensemble combinations
+
+Core prediction outputs include:
+
+- target properties
+- ADMET-related indicators
+- confidence and feasibility-aligned ranking signals
+
+## 9. Retrosynthesis and Synthesis Feasibility
+
+### 9.1 Retrosynthesis Planner
+
+`RetrosynthesisPlanner` provides:
+
+- baseline route planning output
+- synthetic accessibility heuristics
+- optional enriched planning via research and AI chat
+
+### 9.2 Feasibility Scoring
+
+`SynthesisFeasibilityScorer` combines:
+
+- synthetic accessibility transforms
+- complexity-aware penalties
+- optional retrosynthesis plan signals
+
+## 10. Internet Research and AI Chat for Synthesis
+
+### 10.1 Enriched Planning Method
+
+`plan_synthesis_with_research(...)` supports:
+
+- internet-backed evidence collection
+- AI synthesis brief generation
+- graceful fallback when network/model access is unavailable
+
+### 10.2 AI Chat Behavior
+
+`AISynthesisChat` uses Llama support with contextual prompts containing:
+
+- molecule SMILES
+- optional target protein
+- top web research references
+
+### 10.3 CLI Usage
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --target EGFR --max-results 5
+```
+
+This command will attempt backend resolution in this order:
+
+1. Google CSE (if credentials are available)
+2. Go fast-search backend (if `ZANE_GO_SEARCH_BIN` is configured)
+3. Python DuckDuckGo fallback
+
+Disable specific enrichments:
+
+```bash
+python -m drug_discovery.cli synthesis-research "CCO" --no-internet
+python -m drug_discovery.cli synthesis-research "CCO" --no-ai
+```
+
+## 11. Optimization Strategies
+
+Optimization modules support candidate ranking under trade-offs such as:
+
+- potency vs synthetic ease
+- predicted efficacy vs toxicity flags
+- novelty vs route availability
+
+## 12. Dashboard Operations and Monitoring
+
+Dashboard views emphasize operational context:
+
+- run identifiers and model mode
+- KPI panel
+- training monitor
+- candidate queue
+- system alerts
+
+### 12.1 Dashboard Layout Diagram
+
+```mermaid
+flowchart LR
+    H[Header] --> M[Main Grid]
+    M --> K[KPI Panel]
+    M --> T[Training Panel]
+    M --> C[Candidate Queue]
+    M --> A[Alerts]
+```
+
+## 13. CLI Operations Manual
+
+Primary commands:
+
+- `train`
+- `predict`
+- `admet`
+- `collect`
+- `dashboard`
+- `assist`
+- `synthesis-research`
+
+### 13.1 Examples
+
+```bash
+python -m drug_discovery.cli train --model transformer --epochs 10 --batch-size 32
+python -m drug_discovery.cli predict "CC(=O)OC1=CC=CC=C1C(=O)O" --model gnn --checkpoint ./checkpoints/gnn_model.pt
 python -m drug_discovery.cli admet "CC(=O)OC1=CC=CC=C1C(=O)O"
-```
-
-### `collect`
-
-Collect molecules from selected sources.
-
-Example:
-
-```bash
-python -m drug_discovery.cli collect --sources pubchem chembl --limit 500
-```
-
-### `dashboard`
-
-Display terminal dashboard in static or live mode.
-
-Examples:
-
-```bash
 python -m drug_discovery.cli dashboard --static
-python -m drug_discovery.cli dashboard --refresh 1.0 --iterations 60
+python -m drug_discovery.cli assist "Summarize top candidate risks"
 ```
 
-### `assist`
+## 14. API and Object Reference
 
-Use Llama-based AI support.
+### 14.1 Key Objects
 
-Example:
+- `DrugDiscoveryPipeline`
+- `RetrosynthesisPlanner`
+- `SynthesisFeasibilityScorer`
+- `InternetSearchClient`
+- `AISynthesisChat`
+- `LlamaSupportAssistant`
 
-```bash
-python -m drug_discovery.cli assist "Propose next validation experiments"
+### 14.2 Return Data Patterns
+
+Most workflow APIs return JSON-serializable dictionaries for easy persistence and CLI rendering.
+
+## 15. CI/CD and Security Pipeline Design
+
+### 15.1 Pipeline Stages
+
+- code-quality
+- test matrix
+- integration-test
+- security-scan
+- docs build placeholder
+
+### 15.2 Security-Specific Hardening
+
+Security scan now includes:
+
+- non-blocking Trivy step
+- guaranteed SARIF creation fallback
+- SARIF upload to GitHub Security on push events
+- SARIF artifact upload for debugging
+
+### 15.3 CI Flow Diagram
+
+```mermaid
+flowchart TD
+    A[Push or PR] --> B[Code Quality]
+    B --> C[Test Matrix]
+    C --> D[Integration Test]
+    A --> E[Security Scan]
+    E --> F[SARIF Upload on Push]
+    E --> G[SARIF Artifact Upload]
+    A --> H[Docs Build]
 ```
 
-## 16. Dashboard Operations
+## 16. Testing and Quality Assurance
 
-Dashboard module provides a professional terminal control surface.
+### 16.1 Test Coverage Areas
 
-### Typical Panels
+- data collection and dataset behavior
+- model and pipeline flows
+- evaluation and ADMET
+- AI support guardrails
+- synthesis research enrichment pathways
+- internet search client behavior
 
-- Run metadata and mode
-- KPI summary
-- Training monitor
-- Candidate queue
-- Alerts/status panel
-
-### Practical Usage
-
-- Use static mode for logs and CI snapshots.
-- Use live mode during active experiments.
-- Capture snapshots to compare run behavior over time.
-
-## 17. AI Support Integration (Meta Llama)
-
-AI support module: `ai_support.py`
-
-### Defaults
-
-- Default model id: `meta-llama/Llama-3.2-1B-Instruct`
-- Prompt format: system guidance plus optional context and user request
-
-### Advanced Invocation
-
-```bash
-python -m drug_discovery.cli assist "Draft a short assay plan" \
-  --model-id meta-llama/Llama-3.2-1B-Instruct \
-  --context "Top candidates: Caffeine, Warfarin" \
-  --max-new-tokens 300 \
-  --temperature 0.7 \
-  --top-p 0.9
-```
-
-### Access Requirements
-
-- Account access to gated checkpoint if required
-- Authentication token in environment (for example `HF_TOKEN`)
-- Network access to model hub
-
-## 18. Experiment Design and Runbook
-
-### Recommended Baseline Runbook
-
-1. Collect 200 to 1000 molecules.
-2. Train transformer baseline and save checkpoint.
-3. Run evaluation and ADMET scoring.
-4. Produce top candidate shortlist.
-5. Review in dashboard and export artifacts.
-
-### Comparative Runbook
-
-1. Train GNN and transformer with aligned split.
-2. Compare losses and ranking agreement.
-3. Build ensemble candidate ranking.
-4. Re-score top molecules with simulation evidence.
-
-### Human Review Runbook
-
-1. Export final shortlist.
-2. Use AI assist to draft validation strategy.
-3. Review with domain experts before downstream action.
-
-## 19. Artifact and Output Management
-
-Artifacts should be organized by run identifiers and timestamps.
-
-Suggested contents per run folder:
-
-- Input dataset snapshot
-- Training logs and metrics
-- Model checkpoint
-- Candidate scoring output CSV/JSON
-- Run summary metadata
-
-This enables repeatability and post-hoc auditability.
-
-## 20. Configuration Strategy
-
-Configuration may be managed through:
-
-- CLI flags for routine workflows
-- Python constructor arguments for programmatic workflows
-- Optional project config files for environment-specific defaults
-
-Recommended policy:
-
-- Keep defaults conservative.
-- Promote explicit override of experiment-critical parameters.
-- Record effective config in run artifacts.
-
-## 21. Validation, Testing, and Quality Controls
-
-### Test Coverage
-
-The repository includes tests for:
-
-- Data and dataset behavior
-- Model components
-- Pipeline orchestration
-- Evaluation logic
-
-### Recommended Local Checks
+### 16.2 Recommended Local Checks
 
 ```bash
 python -m pytest -q
@@ -491,145 +483,197 @@ python -m ruff check .
 python -m black --check .
 ```
 
-### Review Criteria
+## 17. Experiment Management and Reproducibility
 
-- No regression in existing tests
-- Lint and style cleanliness
-- Documented behavior for user-visible changes
+Recommended run artifact policy:
 
-## 22. CI/CD Practices
+- include timestamped run identifiers
+- store effective config values
+- preserve model checkpoints and output tables
+- capture summary JSON for each major run
 
-Core CI expectations:
+## 18. Performance Engineering
 
-- Run tests on push and PR
-- Enforce static checks
-- Surface actionable logs for failures
+- use CPU for smoke tests and rapid checks
+- move training to GPU for larger runs
+- optimize batch sizes incrementally
+- separate expensive web collection from model iterations
 
-Operational recommendations:
+## 19. Reliability and Failure Recovery
 
-- Keep CI deterministic where possible
-- Isolate slow external-dependency tests
-- Preserve artifact logs for failed runs
+Design principles:
 
-## 23. Security and Responsible Research Use
+- fail gracefully on external API disruptions
+- preserve partial outputs where possible
+- emit actionable errors for CLI users
+- keep security scanning non-blocking but observable
 
-This platform is for research support.
+## 20. Security and Responsible Use
 
-Mandatory guardrails:
+Required guidance:
 
-- Do not interpret outputs as clinical directives.
-- Keep expert review in the loop for critical decisions.
-- Validate key conclusions with experimental evidence.
-- Apply access controls for sensitive data and artifacts.
+- treat outputs as research support only
+- do not infer clinical guidance directly
+- validate synthesis recommendations with experts
+- maintain provenance of external internet sources
 
-## 24. Performance and Scaling Guidance
+## 21. Deployment and Environment Strategy
 
-### Training Throughput
+- use virtual environments for reproducibility
+- pin critical dependencies via requirements files
+- use separate environments for CI and heavy local experiments
+- store credentials in environment variables, not source code
 
-- Increase batch size gradually based on memory limits.
-- Use GPU acceleration for large runs.
-- Profile data loading bottlenecks before model optimization.
+## 22. Extension Patterns and Plugin Concepts
 
-### Operational Scaling
+### 22.1 Add a New Data Source
 
-- Separate data collection from training in larger workflows.
-- Use cached datasets to improve reproducibility and speed.
-- Parallelize independent experiments where feasible.
+1. implement collection method
+2. normalize schema
+3. integrate into pipeline source selector
+4. add tests for parser and merge flow
 
-## 25. Deployment Considerations
+### 22.2 Add a New Model
 
-For internal platformization:
+1. create model class
+2. add pipeline selection branch
+3. validate trainer compatibility
+4. add unit and integration tests
 
-- Standardize run directories and naming conventions.
-- Provide pinned dependency environments.
-- Integrate CLI flows into schedulers or pipeline runners.
-- Implement monitoring around long-running tasks.
+### 22.3 Add a New CLI Command
 
-## 26. Failure Modes and Troubleshooting
+1. register parser command
+2. implement handler function
+3. add docs and test coverage
 
-### Llama Model Cannot Load
+## 23. Troubleshooting Playbook
 
-Likely causes:
+### 23.1 Internet Search Returns Empty
 
-- Missing/invalid auth token
-- Access not granted for model id
-- Blocked network route to model hub
+Possible causes:
 
-### Training Divergence
-
-Likely causes and actions:
-
-- Learning rate too high: reduce by 2x to 10x
-- Unstable batch composition: reduce batch size
-- Data quality issues: inspect invalid or noisy records
-
-### CLI Argument Errors
-
-Actions:
-
-- Review command help and required flags
-- Confirm checkpoint path exists
-- Activate expected Python environment
-
-### Slow Data Collection
+- network restrictions
+- blocked endpoint
+- malformed query
 
 Actions:
 
-- Lower source limits for quick iteration
-- Use cached datasets for repeat runs
-- Decouple external collection from training jobs
+- retry with a simpler query
+- disable internet step and use AI only
+- verify network and DNS access
 
-## 27. Extension Guide
+### 23.2 AI Guidance Unavailable
 
-### Add a New Data Source
+Possible causes:
 
-1. Extend data collector with new method.
-2. Normalize schema to required columns.
-3. Add source switch logic in pipeline collection path.
-4. Add test coverage for parsing and merge behavior.
+- missing Hugging Face token
+- model access restrictions
+- transient hub/network issue
 
-### Add a New Model
+Actions:
 
-1. Create model module in `models`.
-2. Add selection branch in pipeline model builder.
-3. Ensure trainer compatibility for batch format.
-4. Add unit and integration tests.
+- verify model access and token
+- run with `--no-ai` to continue baseline flow
 
-### Add a New CLI Command
+### 23.3 Security Upload Issues in CI
 
-1. Register parser and options in CLI module.
-2. Implement command handler function.
-3. Add docs and examples.
-4. Add smoke tests where appropriate.
+Actions:
 
-## 28. Contribution Workflow
+- verify push-based security upload context
+- inspect uploaded SARIF artifact
+- review Trivy output logs for parser issues
 
-Recommended flow:
+## 24. Contribution and Review Standards
 
-1. Create a focused branch.
-2. Keep changes scoped and reviewable.
-3. Run local checks before PR.
-4. Update documentation with behavior changes.
-5. Include validation summary in PR description.
+- keep PRs focused and scoped
+- include validation outputs in PR description
+- update docs for behavior changes
+- avoid unrelated refactors in functional fixes
 
-## 29. FAQ
+## 25. Appendix (Diagrams, Trees, and Examples)
 
-### Is ZANE production-ready for clinical decisions?
+### 25.1 Candidate Scoring Decision Diagram
 
-No. It is a research and decision-support platform requiring expert oversight and experimental validation.
+```mermaid
+flowchart TD
+    A[Model Predictions] --> B[ADMET Screening]
+    B --> C[Synthesis Feasibility]
+    C --> D[Internet Evidence]
+    D --> E[AI Synthesis Guidance]
+    E --> F[Final Prioritization]
+```
 
-### Can I replace built-in models?
+### 25.2 Example Enriched Synthesis Output
 
-Yes. The architecture is modular and designed for extension.
+```json
+{
+  "target": "CCO",
+  "success": true,
+  "num_steps": 3,
+  "estimated_yield": 0.72,
+  "research_query": "CCO EGFR synthesis route medicinal chemistry",
+  "research_hits": [
+    {
+      "title": "Medicinal chemistry synthesis route reference",
+      "url": "https://example.org/ref1",
+      "snippet": "...",
+      "source": "google-cse"
+    }
+  ],
+  "ai_model_id": "meta-llama/Llama-3.2-1B-Instruct",
+  "ai_synthesis_guidance": "Suggested route and risk points..."
+}
+```
 
-### Can I run this without a GPU?
+### 25.3 Directory Tree Snapshot (Detailed)
 
-Yes. CPU execution is supported, but larger training jobs will be slower.
+```text
+drug_discovery/
+├── __init__.py
+├── ai_support.py
+├── cli.py
+├── dashboard.py
+├── pipeline.py
+├── agents/
+│   ├── __init__.py
+│   └── orchestrator.py
+├── data/
+│   └── __init__.py
+├── evaluation/
+│   ├── __init__.py
+│   └── predictor.py
+├── knowledge_graph/
+│   ├── __init__.py
+│   └── graph.py
+├── models/
+│   ├── __init__.py
+│   ├── e3_equivariant.py
+│   ├── ensemble.py
+│   ├── gnn.py
+│   └── transformer.py
+├── optimization/
+│   ├── __init__.py
+│   ├── bayesian.py
+│   └── multi_objective.py
+├── physics/
+│   ├── __init__.py
+│   ├── docking.py
+│   └── md_simulator.py
+├── synthesis/
+│   ├── __init__.py
+│   └── retrosynthesis.py
+├── training/
+│   ├── __init__.py
+│   ├── closed_loop.py
+│   ├── distributed.py
+│   └── trainer.py
+├── utils/
+│   └── __init__.py
+└── web_scraping/
+    ├── __init__.py
+    └── scraper.py
+```
 
-### Is dashboard usage required?
-
-No. Dashboard is optional but recommended for operational visibility.
-
-## 30. License
+## 26. License
 
 CC0 1.0 Universal

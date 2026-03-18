@@ -18,6 +18,15 @@ class AISupportConfig:
     device_map: str = "auto"
 
 
+def _validate_generation_params(max_new_tokens: int, temperature: float, top_p: float) -> None:
+    if max_new_tokens <= 0:
+        raise ValueError("max_new_tokens must be > 0")
+    if temperature < 0.0:
+        raise ValueError("temperature must be >= 0")
+    if not 0.0 < top_p <= 1.0:
+        raise ValueError("top_p must be in (0, 1]")
+
+
 class LlamaSupportAssistant:
     """Small wrapper around a Meta Llama chat model for project assistance."""
 
@@ -45,6 +54,10 @@ class LlamaSupportAssistant:
                 dtype=dtype,
                 device_map=self.config.device_map,
             )
+            if getattr(self._tokenizer, "pad_token_id", None) is None and getattr(
+                self._tokenizer, "eos_token_id", None
+            ) is not None:
+                self._tokenizer.pad_token_id = self._tokenizer.eos_token_id
         except Exception as exc:
             raise RuntimeError(
                 "Failed to load Meta Llama model. Ensure you have accepted model access on Hugging Face "
@@ -68,6 +81,11 @@ class LlamaSupportAssistant:
         top_p: float = 0.9,
     ) -> str:
         """Generate a response using the configured Llama model."""
+        if not user_prompt or not user_prompt.strip():
+            raise ValueError("user_prompt cannot be empty")
+
+        _validate_generation_params(max_new_tokens=max_new_tokens, temperature=temperature, top_p=top_p)
+
         self._load()
 
         if self._tokenizer is None or self._model is None:
@@ -89,6 +107,7 @@ class LlamaSupportAssistant:
                 add_generation_prompt=True,
                 return_tensors="pt",
             )
+            attention_mask = torch.ones_like(model_input)
         else:
             fallback_text = (
                 f"System: {self._system_prompt()}\n\n"
@@ -97,19 +116,31 @@ class LlamaSupportAssistant:
             )
             encoded = self._tokenizer(fallback_text, return_tensors="pt")
             model_input = encoded["input_ids"]
+            attention_mask = encoded.get("attention_mask")
 
         model_input = model_input.to(self._model.device)
+        if attention_mask is not None:
+            attention_mask = attention_mask.to(self._model.device)
+
+        do_sample = temperature > 0.0
+        generate_kwargs = {
+            "max_new_tokens": max_new_tokens,
+            "do_sample": do_sample,
+            "temperature": max(temperature, 1e-6),
+            "top_p": top_p,
+            "attention_mask": attention_mask,
+        }
+
+        pad_token_id = getattr(self._tokenizer, "pad_token_id", None)
+        if pad_token_id is not None:
+            generate_kwargs["pad_token_id"] = pad_token_id
 
         with torch.no_grad():
-            output = self._model.generate(
-                model_input,
-                max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=temperature,
-                top_p=top_p,
-                pad_token_id=self._tokenizer.eos_token_id,
-            )
+            output = self._model.generate(model_input, **generate_kwargs)
 
         generated = output[0][model_input.shape[-1] :]
         response = self._tokenizer.decode(generated, skip_special_tokens=True)
-        return response.strip()
+        cleaned = response.strip()
+        if not cleaned:
+            raise RuntimeError("Model returned an empty response.")
+        return cleaned

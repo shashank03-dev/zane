@@ -8,6 +8,8 @@ import logging
 
 import numpy as np
 
+from drug_discovery.web_scraping import AISynthesisChat, InternetSearchClient
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,6 +21,7 @@ class RetrosynthesisPlanner:
 
     def __init__(self):
         self.reaction_templates = []
+        self.internet_search = InternetSearchClient()
 
     def plan_synthesis(self, target_smiles: str, max_depth: int = 5) -> dict:
         """
@@ -52,6 +55,61 @@ class RetrosynthesisPlanner:
         except Exception as e:
             logger.error(f"Retrosynthesis planning error: {e}")
             return {"success": False, "error": str(e)}
+
+    def plan_synthesis_with_research(
+        self,
+        target_smiles: str,
+        target_protein: str | None = None,
+        max_depth: int = 5,
+        max_research_results: int = 5,
+        use_internet: bool = True,
+        use_ai_chat: bool = True,
+    ) -> dict:
+        """
+        Plan synthesis and enrich output with web research and AI guidance.
+
+        Args:
+            target_smiles: Target molecule SMILES
+            target_protein: Optional target protein context
+            max_depth: Maximum retrosynthetic depth
+            max_research_results: Number of web results to include
+            use_internet: Enable internet research
+            use_ai_chat: Enable LLM-generated synthesis brief
+
+        Returns:
+            Extended synthesis plan dictionary
+        """
+        plan = self.plan_synthesis(target_smiles=target_smiles, max_depth=max_depth)
+        if not plan.get("success"):
+            return plan
+
+        research_hits: list[dict[str, str]] = []
+        query = f"{target_smiles} synthesis route medicinal chemistry"
+        if target_protein:
+            query = f"{target_smiles} {target_protein} synthesis route medicinal chemistry"
+
+        if use_internet:
+            research_hits = self.internet_search.search_web(query=query, max_results=max_research_results)
+
+        plan["research_query"] = query
+        plan["research_hits"] = research_hits
+
+        if use_ai_chat:
+            try:
+                ai_chat = AISynthesisChat()
+                ai_output = ai_chat.generate_synthesis_brief(
+                    smiles=target_smiles,
+                    target_protein=target_protein,
+                    research_hits=research_hits,
+                )
+                plan["ai_synthesis_guidance"] = ai_output.get("brief", "")
+                plan["ai_model_id"] = ai_output.get("model_id", "")
+            except Exception as exc:
+                logger.warning(f"AI synthesis guidance unavailable: {exc}")
+                plan["ai_synthesis_guidance"] = ""
+                plan["ai_error"] = str(exc)
+
+        return plan
 
     def score_synthetic_accessibility(self, smiles: str) -> float:
         """

@@ -42,9 +42,7 @@ class LlamaSupportAssistant:
         try:
             from transformers import AutoModelForCausalLM, AutoTokenizer
         except Exception as exc:  # pragma: no cover - dependency import issue
-            raise RuntimeError(
-                "Transformers is required for Llama AI support. Install requirements first."
-            ) from exc
+            raise RuntimeError("Transformers is required for Llama AI support. Install requirements first.") from exc
 
         try:
             self._tokenizer = AutoTokenizer.from_pretrained(self.config.model_id)
@@ -54,9 +52,10 @@ class LlamaSupportAssistant:
                 dtype=dtype,
                 device_map=self.config.device_map,
             )
-            if getattr(self._tokenizer, "pad_token_id", None) is None and getattr(
-                self._tokenizer, "eos_token_id", None
-            ) is not None:
+            if (
+                getattr(self._tokenizer, "pad_token_id", None) is None
+                and getattr(self._tokenizer, "eos_token_id", None) is not None
+            ):
                 self._tokenizer.pad_token_id = self._tokenizer.eos_token_id
         except Exception as exc:
             raise RuntimeError(
@@ -109,11 +108,7 @@ class LlamaSupportAssistant:
             )
             attention_mask = torch.ones_like(model_input)
         else:
-            fallback_text = (
-                f"System: {self._system_prompt()}\n\n"
-                f"User: {combined_prompt}\n\n"
-                "Assistant:"
-            )
+            fallback_text = f"System: {self._system_prompt()}\n\n" f"User: {combined_prompt}\n\n" "Assistant:"
             encoded = self._tokenizer(fallback_text, return_tensors="pt")
             model_input = encoded["input_ids"]
             attention_mask = encoded.get("attention_mask")

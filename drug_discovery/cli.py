@@ -6,6 +6,7 @@ import argparse
 import sys
 
 from drug_discovery import DrugDiscoveryPipeline
+from drug_discovery.ai_support import LlamaSupportAssistant
 from drug_discovery.dashboard import run_dashboard
 from drug_discovery.evaluation import ADMETPredictor
 
@@ -43,6 +44,19 @@ def main():
     dashboard_parser.add_argument("--refresh", type=float, default=1.0, help="Live refresh interval in seconds")
     dashboard_parser.add_argument("--iterations", type=int, default=30, help="Number of live refresh cycles")
 
+    # AI support command (Meta Llama)
+    support_parser = subparsers.add_parser("assist", help="Use Meta Llama for AI support")
+    support_parser.add_argument("prompt", help="Question or task for the AI assistant")
+    support_parser.add_argument(
+        "--model-id",
+        default="meta-llama/Llama-3.2-1B-Instruct",
+        help="Hugging Face model id (default: Meta Llama 3.2 1B Instruct)",
+    )
+    support_parser.add_argument("--context", default=None, help="Optional context string")
+    support_parser.add_argument("--max-new-tokens", type=int, default=256)
+    support_parser.add_argument("--temperature", type=float, default=0.7)
+    support_parser.add_argument("--top-p", type=float, default=0.9)
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -55,6 +69,8 @@ def main():
         collect_data(args)
     elif args.command == "dashboard":
         show_dashboard(args)
+    elif args.command == "assist":
+        run_ai_support(args)
     else:
         parser.print_help()
 
@@ -148,6 +164,27 @@ def collect_data(args):
 def show_dashboard(args):
     """Display ZANE terminal dashboard."""
     run_dashboard(live=not args.static, refresh_seconds=args.refresh, iterations=args.iterations)
+
+
+def run_ai_support(args):
+    """Generate AI support response using Meta Llama."""
+    assistant = LlamaSupportAssistant()
+    assistant.config.model_id = args.model_id
+
+    try:
+        response = assistant.respond(
+            user_prompt=args.prompt,
+            context=args.context,
+            max_new_tokens=args.max_new_tokens,
+            temperature=args.temperature,
+            top_p=args.top_p,
+        )
+    except RuntimeError as exc:
+        print(f"Error: {exc}")
+        sys.exit(1)
+
+    print("\nZANE AI Support Response:\n")
+    print(response)
 
 
 if __name__ == "__main__":

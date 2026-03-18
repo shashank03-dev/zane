@@ -1,433 +1,635 @@
-# AI Drug Discovery Platform - Technical Documentation
+# ZANE Technical Documentation
+
+Comprehensive technical reference for the ZANE autonomous AI drug discovery platform.
+
+## Document Control
+
+- Product: ZANE
+- Repository: cosmic-hydra/zane
+- Audience: ML engineers, computational chemists, platform engineers, researchers
+- Scope: architecture, module behavior, operations, workflows, quality gates, and troubleshooting
 
 ## Table of Contents
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Installation](#installation)
-4. [Quick Start](#quick-start)
-5. [Components](#components)
-6. [API Reference](#api-reference)
-7. [Training](#training)
-8. [Evaluation](#evaluation)
-9. [Advanced Usage](#advanced-usage)
-10. [Contributing](#contributing)
 
-## Overview
+1. Introduction
+2. Platform Goals and Non-Goals
+3. Conceptual Architecture
+4. Runtime Data Flow
+5. Package and Module Reference
+6. Core Pipeline API
+7. Data Layer
+8. Modeling Layer
+9. Training Layer
+10. Evaluation Layer
+11. Optimization Layer
+12. Physics Layer
+13. Synthesis Layer
+14. Multi-Agent Orchestration
+15. Command-Line Interface
+16. Dashboard Operations
+17. AI Support Integration (Meta Llama)
+18. Experiment Design and Runbook
+19. Artifact and Output Management
+20. Configuration Strategy
+21. Validation, Testing, and Quality Controls
+22. CI/CD Practices
+23. Security and Responsible Research Use
+24. Performance and Scaling Guidance
+25. Deployment Considerations
+26. Failure Modes and Troubleshooting
+27. Extension Guide
+28. Contribution Workflow
+29. FAQ
+30. License
 
-The AI Drug Discovery Platform is a state-of-the-art machine learning system for pharmaceutical research. It combines:
+## 1. Introduction
 
-- **Graph Neural Networks (GNN)** for molecular structure analysis
-- **Transformer models** for sequence-based learning
-- **Ensemble methods** for robust predictions
-- **Self-learning capabilities** for continuous improvement
-- **Multi-source data integration** from PubChem, ChEMBL, and more
+ZANE is an integrated computational drug discovery platform that combines molecular data ingestion, machine learning prediction, simulation-informed triage, and operational observability.
 
-### Key Features
+Unlike isolated scripts and disconnected tools, ZANE provides a coherent workflow where each phase can produce reproducible artifacts and feed downstream decision logic.
 
-- ✅ Autonomous data collection from public databases
-- ✅ Multi-model architecture (GNN, Transformer, Ensemble)
-- ✅ ADMET property prediction (Absorption, Distribution, Metabolism, Excretion, Toxicity)
-- ✅ Continuous learning pipeline
-- ✅ Drug-likeness assessment (Lipinski's Rule, QED)
-- ✅ Synthetic accessibility estimation
-- ✅ Toxicity screening
+### Intended Usage
 
-## Architecture
+- Rapid prototyping of molecular screening workflows
+- Model-centric candidate ranking and analysis
+- Team-based research operations with shared conventions
+- AI-assisted planning and interpretation support
 
-```
-drug_discovery/
-├── data/
-│   ├── collector.py       # Data collection from public sources
-│   ├── dataset.py         # PyTorch datasets and featurization
-│   └── __init__.py
-├── models/
-│   ├── gnn.py            # Graph Neural Networks
-│   ├── transformer.py    # Transformer models
-│   ├── ensemble.py       # Ensemble methods
-│   └── __init__.py
-├── training/
-│   ├── trainer.py        # Training loop and self-learning
-│   └── __init__.py
-├── evaluation/
-│   ├── predictor.py      # Property prediction and ADMET
-│   └── __init__.py
-├── utils/
-│   └── __init__.py       # Utility functions
-└── pipeline.py           # Main pipeline orchestrator
-```
+### Out of Scope
 
-## Installation
+- Clinical decision support in regulated production settings
+- Direct replacement for wet-lab validation
+- Regulatory-grade safety claims without additional validation systems
 
-### Requirements
-- Python 3.8+
-- CUDA-capable GPU (recommended)
-- 16GB+ RAM
+## 2. Platform Goals and Non-Goals
 
-### Install from source
+### Goals
+
+- Modular, extensible architecture for scientific iteration
+- Reproducible workflows with explicit outputs
+- Practical CLI-first operations
+- Strong documentation and quality controls
+- Support for both baseline and advanced model experimentation
+
+### Non-Goals
+
+- Monolithic, hard-to-extend architecture
+- Hidden side effects in core workflow execution
+- Over-optimized assumptions for one domain only
+
+## 3. Conceptual Architecture
+
+ZANE follows a layered architecture to separate concerns and reduce coupling.
+
+- Interface Layer
+  - Command-line interface
+  - Terminal dashboard
+- Orchestration Layer
+  - Main pipeline orchestration
+  - Multi-agent flow control
+- Intelligence Layer
+  - Property prediction models
+  - ADMET and scoring evaluators
+  - Optimization engines
+- Scientific Layer
+  - Docking and molecular dynamics
+  - Retrosynthesis and synthesis feasibility
+- Data Layer
+  - Data collection adapters
+  - Featurization and dataset preparation
+- Platform Layer
+  - Tests, linting, CI, package metadata
+
+## 4. Runtime Data Flow
+
+Standard execution pattern:
+
+1. Acquire molecules from configured sources.
+2. Normalize and deduplicate records.
+3. Convert molecular records into model-ready features.
+4. Split data into train and validation subsets.
+5. Train selected architecture.
+6. Evaluate predictive behavior and reliability.
+7. Score candidate molecules with ADMET and optional simulation signals.
+8. Rank and export outputs for human review.
+9. Observe progress and health via terminal dashboard.
+
+## 5. Package and Module Reference
+
+Primary package: `drug_discovery`
+
+### Top-Level Modules
+
+- `pipeline.py`: orchestration of end-to-end discovery lifecycle
+- `cli.py`: command-line entrypoint and task routing
+- `dashboard.py`: terminal UI for operational monitoring
+- `ai_support.py`: Meta Llama integration for assistant tasks
+
+### Subpackages
+
+- `data`: collection, featurization, dataset management
+- `models`: GNN, transformer, ensemble, equivariant models
+- `training`: trainer and learning loops
+- `evaluation`: predictor and scoring logic
+- `optimization`: Bayesian and multi-objective optimization
+- `physics`: docking and MD simulation components
+- `synthesis`: retrosynthesis utilities
+- `knowledge_graph`: graph data abstractions
+- `agents`: orchestration agents for discovery cycles
+- `web_scraping`: domain data scraping helpers
+
+## 6. Core Pipeline API
+
+Main orchestrator: `DrugDiscoveryPipeline`
+
+### Constructor Inputs
+
+- `model_type`: `gnn`, `transformer`, or `ensemble`
+- `device`: compute target, typically `cpu` or `cuda`
+- `cache_dir`: cache location for collected datasets
+- `checkpoint_dir`: model checkpoint output path
+
+### Core Methods
+
+- `collect_data(sources, limit_per_source)`
+  - Retrieves data from selected sources and merges results.
+- `prepare_datasets(data, smiles_col, target_col, test_size, batch_size)`
+  - Builds train/test loaders based on featurization mode.
+- `build_model(**model_kwargs)`
+  - Instantiates model architecture according to model type.
+- `train(train_loader, val_loader, num_epochs, learning_rate, **trainer_kwargs)`
+  - Trains and returns training history.
+- `predict_properties(smiles, include_admet)`
+  - Produces property and optional ADMET outputs for one molecule.
+- `generate_candidates(target_protein, num_candidates, filter_criteria)`
+  - Produces candidate list with attached predictions.
+- `evaluate(test_loader, is_graph)`
+  - Runs evaluator metrics from model predictions.
+- `save(filepath)` and `load(filepath)`
+  - Persists and restores pipeline state.
+
+## 7. Data Layer
+
+### Data Sources
+
+Current collection pathways include:
+
+- PubChem
+- ChEMBL
+- Approved-drug collections
+
+### Data Responsibilities
+
+- Query external sources
+- Normalize schema
+- Deduplicate molecular records
+- Persist cached outputs for repeatability
+
+### Featurization Pathways
+
+- Graph-based featurization for GNN workflows
+- Fingerprint/descriptor pathway for transformer or non-graph pipelines
+
+### Dataset Construction
+
+`MolecularDataset` provides sample retrieval behavior compatible with pipeline loaders.
+
+## 8. Modeling Layer
+
+### Supported Model Types
+
+- Graph Neural Network (`MolecularGNN`)
+- Transformer (`MolecularTransformer`)
+- Ensemble (`EnsembleModel`)
+
+### Model Selection Guidance
+
+- Use GNN when molecular structural topology is central.
+- Use transformer for sequence/fingerprint-heavy workflows.
+- Use ensemble when improving robustness across biases.
+
+### Extensibility Notes
+
+To add a new architecture:
+
+1. Implement model class in `models`.
+2. Add factory logic in pipeline model builder.
+3. Ensure trainer compatibility for batch format.
+4. Add tests for forward pass and integration path.
+
+## 9. Training Layer
+
+Training relies on `SelfLearningTrainer` for fit/predict loop behavior.
+
+### Typical Training Controls
+
+- Number of epochs
+- Learning rate
+- Device placement
+- Checkpoint save directory
+
+### Expected Outputs
+
+- Train and validation loss history
+- Best checkpoint artifact
+- Trained model attached to pipeline state
+
+### Best Practices
+
+- Track fixed splits for fair model comparisons.
+- Run short smoke epochs before long jobs.
+- Validate model outputs on a stable holdout set.
+
+## 10. Evaluation Layer
+
+Evaluation utilities provide both pure model metrics and drug-centric indicators.
+
+### Model Metrics
+
+- Regression metrics (for property prediction tasks)
+- Consistency checks between predicted and observed values
+
+### ADMET and Drug-Likeness
+
+Via `ADMETPredictor`, common checks include:
+
+- Lipinski rule assessment
+- QED estimation
+- Synthetic accessibility scoring
+- Toxicity-flag heuristics
+
+## 11. Optimization Layer
+
+Optimization modules support candidate improvement and trade-off management.
+
+- Bayesian optimization primitives
+- Multi-objective optimization support
+
+Use this layer when balancing competing objectives such as potency, synthetic feasibility, and safety proxies.
+
+## 12. Physics Layer
+
+Physics modules provide complementary evidence for model-driven ranking.
+
+### Components
+
+- Docking interfaces and scoring utilities
+- Molecular dynamics simulation functions
+
+### Use Cases
+
+- Prioritization refinement after ML ranking
+- Stability sanity checks
+- Secondary evidence generation for shortlist review
+
+## 13. Synthesis Layer
+
+Synthesis modules provide feasibility-aware signals.
+
+### Responsibilities
+
+- Retrosynthesis planning scaffolding
+- Route feasibility support
+- Chemistry-aware candidate triage
+
+## 14. Multi-Agent Orchestration
+
+`agents/orchestrator.py` implements role-based agent flow.
+
+### Agent Roles
+
+- Generator agent
+- Evaluator agent
+- Planner agent
+- Optimizer agent
+
+### Workflow Pattern
+
+1. Generate candidates
+2. Evaluate by selected criteria
+3. Plan experiment subset
+4. Optimize final shortlist
+
+## 15. Command-Line Interface
+
+CLI entry module: `python -m drug_discovery.cli`
+
+### `train`
+
+Train a model from collected data.
+
+Example:
 
 ```bash
-git clone https://github.com/cosmic-hydra/zane.git
-cd zane
-pip install -r requirements.txt
-pip install -e .
+python -m drug_discovery.cli train --model transformer --epochs 20 --batch-size 32
 ```
 
-### Install dependencies
+### `predict`
+
+Predict properties for one molecule using a checkpoint.
+
+Example:
 
 ```bash
-pip install torch torch-geometric rdkit scikit-learn transformers
+python -m drug_discovery.cli predict "CC(=O)OC1=CC=CC=C1C(=O)O" \
+  --model gnn \
+  --checkpoint ./checkpoints/gnn_model.pt
 ```
 
-## Quick Start
+### `admet`
 
-### Basic Usage
+Run ADMET-focused analysis for one molecule.
 
-```python
-from drug_discovery import DrugDiscoveryPipeline
+Example:
 
-# Initialize
-pipeline = DrugDiscoveryPipeline(model_type='gnn')
-
-# Collect data
-data = pipeline.collect_data(sources=['pubchem', 'chembl'], limit_per_source=1000)
-
-# Prepare datasets
-train_loader, test_loader = pipeline.prepare_datasets(data)
-
-# Train
-history = pipeline.train(train_loader, test_loader, num_epochs=50)
-
-# Predict
-properties = pipeline.predict_properties("CC(=O)OC1=CC=CC=C1C(=O)O")
-print(properties)
+```bash
+python -m drug_discovery.cli admet "CC(=O)OC1=CC=CC=C1C(=O)O"
 ```
 
-## Components
+### `collect`
 
-### 1. Data Collection
+Collect molecules from selected sources.
 
-The `DataCollector` class fetches molecular data from:
+Example:
 
-- **PubChem**: General chemical database
-- **ChEMBL**: Bioactivity database
-- **DrugBank**: Approved and experimental drugs
-
-```python
-from drug_discovery.data import DataCollector
-
-collector = DataCollector()
-pubchem_data = collector.collect_from_pubchem(query='kinase inhibitor', limit=1000)
-chembl_data = collector.collect_from_chembl(organism='Homo sapiens', limit=1000)
-approved_drugs = collector.collect_approved_drugs()
+```bash
+python -m drug_discovery.cli collect --sources pubchem chembl --limit 500
 ```
 
-### 2. Molecular Featurization
+### `dashboard`
 
-Convert SMILES to machine learning features:
+Display terminal dashboard in static or live mode.
 
-```python
-from drug_discovery.data import MolecularFeaturizer
+Examples:
 
-featurizer = MolecularFeaturizer()
-
-# Graph representation
-graph = featurizer.smiles_to_graph("CC(=O)OC1=CC=CC=C1C(=O)O")
-
-# Molecular fingerprint
-fingerprint = featurizer.smiles_to_fingerprint("CC(=O)OC1=CC=CC=C1C(=O)O")
-
-# Molecular descriptors
-descriptors = featurizer.compute_molecular_descriptors("CC(=O)OC1=CC=CC=C1C(=O)O")
+```bash
+python -m drug_discovery.cli dashboard --static
+python -m drug_discovery.cli dashboard --refresh 1.0 --iterations 60
 ```
 
-### 3. Models
+### `assist`
 
-#### Graph Neural Network (GNN)
+Use Llama-based AI support.
 
-Uses Graph Attention Networks for molecular property prediction:
+Example:
 
-```python
-from drug_discovery.models import MolecularGNN
-
-model = MolecularGNN(
-    node_features=8,
-    edge_features=3,
-    hidden_dim=128,
-    num_layers=4,
-    num_heads=4,
-    pooling='attention'
-)
+```bash
+python -m drug_discovery.cli assist "Propose next validation experiments"
 ```
 
-#### Transformer
+## 16. Dashboard Operations
 
-Sequence-based learning from molecular fingerprints:
+Dashboard module provides a professional terminal control surface.
 
-```python
-from drug_discovery.models import MolecularTransformer
+### Typical Panels
 
-model = MolecularTransformer(
-    input_dim=2048,
-    hidden_dim=512,
-    num_layers=6,
-    num_heads=8
-)
+- Run metadata and mode
+- KPI summary
+- Training monitor
+- Candidate queue
+- Alerts/status panel
+
+### Practical Usage
+
+- Use static mode for logs and CI snapshots.
+- Use live mode during active experiments.
+- Capture snapshots to compare run behavior over time.
+
+## 17. AI Support Integration (Meta Llama)
+
+AI support module: `ai_support.py`
+
+### Defaults
+
+- Default model id: `meta-llama/Llama-3.2-1B-Instruct`
+- Prompt format: system guidance plus optional context and user request
+
+### Advanced Invocation
+
+```bash
+python -m drug_discovery.cli assist "Draft a short assay plan" \
+  --model-id meta-llama/Llama-3.2-1B-Instruct \
+  --context "Top candidates: Caffeine, Warfarin" \
+  --max-new-tokens 300 \
+  --temperature 0.7 \
+  --top-p 0.9
 ```
 
-#### Ensemble
+### Access Requirements
 
-Combines multiple models:
+- Account access to gated checkpoint if required
+- Authentication token in environment (for example `HF_TOKEN`)
+- Network access to model hub
 
-```python
-from drug_discovery.models import EnsembleModel
+## 18. Experiment Design and Runbook
 
-ensemble = EnsembleModel([gnn_model, transformer_model])
+### Recommended Baseline Runbook
+
+1. Collect 200 to 1000 molecules.
+2. Train transformer baseline and save checkpoint.
+3. Run evaluation and ADMET scoring.
+4. Produce top candidate shortlist.
+5. Review in dashboard and export artifacts.
+
+### Comparative Runbook
+
+1. Train GNN and transformer with aligned split.
+2. Compare losses and ranking agreement.
+3. Build ensemble candidate ranking.
+4. Re-score top molecules with simulation evidence.
+
+### Human Review Runbook
+
+1. Export final shortlist.
+2. Use AI assist to draft validation strategy.
+3. Review with domain experts before downstream action.
+
+## 19. Artifact and Output Management
+
+Artifacts should be organized by run identifiers and timestamps.
+
+Suggested contents per run folder:
+
+- Input dataset snapshot
+- Training logs and metrics
+- Model checkpoint
+- Candidate scoring output CSV/JSON
+- Run summary metadata
+
+This enables repeatability and post-hoc auditability.
+
+## 20. Configuration Strategy
+
+Configuration may be managed through:
+
+- CLI flags for routine workflows
+- Python constructor arguments for programmatic workflows
+- Optional project config files for environment-specific defaults
+
+Recommended policy:
+
+- Keep defaults conservative.
+- Promote explicit override of experiment-critical parameters.
+- Record effective config in run artifacts.
+
+## 21. Validation, Testing, and Quality Controls
+
+### Test Coverage
+
+The repository includes tests for:
+
+- Data and dataset behavior
+- Model components
+- Pipeline orchestration
+- Evaluation logic
+
+### Recommended Local Checks
+
+```bash
+python -m pytest -q
+python -m ruff check .
+python -m black --check .
 ```
 
-### 4. Training
+### Review Criteria
 
-Self-learning trainer with automatic hyperparameter tuning:
+- No regression in existing tests
+- Lint and style cleanliness
+- Documented behavior for user-visible changes
 
-```python
-from drug_discovery.training import SelfLearningTrainer
+## 22. CI/CD Practices
 
-trainer = SelfLearningTrainer(
-    model=model,
-    learning_rate=1e-4,
-    patience=10
-)
+Core CI expectations:
 
-history = trainer.train(train_loader, val_loader, num_epochs=100)
-```
+- Run tests on push and PR
+- Enforce static checks
+- Surface actionable logs for failures
 
-### 5. ADMET Prediction
+Operational recommendations:
 
-Predict drug-like properties:
+- Keep CI deterministic where possible
+- Isolate slow external-dependency tests
+- Preserve artifact logs for failed runs
 
-```python
-from drug_discovery.evaluation import ADMETPredictor
+## 23. Security and Responsible Research Use
 
-admet = ADMETPredictor()
+This platform is for research support.
 
-# Lipinski's Rule of Five
-lipinski = admet.check_lipinski_rule(smiles)
+Mandatory guardrails:
 
-# Drug-likeness (QED)
-qed = admet.calculate_qed(smiles)
+- Do not interpret outputs as clinical directives.
+- Keep expert review in the loop for critical decisions.
+- Validate key conclusions with experimental evidence.
+- Apply access controls for sensitive data and artifacts.
 
-# Synthetic accessibility
-sa_score = admet.calculate_synthetic_accessibility(smiles)
+## 24. Performance and Scaling Guidance
 
-# Toxicity flags
-toxicity = admet.predict_toxicity_flags(smiles)
-```
+### Training Throughput
 
-## API Reference
+- Increase batch size gradually based on memory limits.
+- Use GPU acceleration for large runs.
+- Profile data loading bottlenecks before model optimization.
 
-### DrugDiscoveryPipeline
+### Operational Scaling
 
-Main orchestrator class.
+- Separate data collection from training in larger workflows.
+- Use cached datasets to improve reproducibility and speed.
+- Parallelize independent experiments where feasible.
 
-**Methods:**
-- `collect_data(sources, limit_per_source)` - Collect molecular data
-- `prepare_datasets(data, smiles_col, target_col)` - Prepare train/test datasets
-- `build_model(**kwargs)` - Build the model
-- `train(train_loader, val_loader, num_epochs)` - Train the model
-- `predict_properties(smiles, include_admet)` - Predict molecular properties
-- `generate_candidates(target_protein, num_candidates)` - Generate drug candidates
-- `evaluate(test_loader)` - Evaluate model performance
-- `save(filepath)` - Save pipeline
-- `load(filepath)` - Load pipeline
+## 25. Deployment Considerations
 
-## Training
+For internal platformization:
 
-### Self-Learning
+- Standardize run directories and naming conventions.
+- Provide pinned dependency environments.
+- Integrate CLI flows into schedulers or pipeline runners.
+- Implement monitoring around long-running tasks.
 
-The platform supports continuous learning:
+## 26. Failure Modes and Troubleshooting
 
-```python
-from drug_discovery.training import ContinuousLearner
+### Llama Model Cannot Load
 
-learner = ContinuousLearner(
-    trainer=trainer,
-    data_collector=collector,
-    retrain_threshold=500
-)
+Likely causes:
 
-# Add new samples
-learner.add_samples(100)
+- Missing/invalid auth token
+- Access not granted for model id
+- Blocked network route to model hub
 
-# Retrain when threshold reached
-if learner.add_samples(400):
-    learner.retrain(train_loader, val_loader)
-```
+### Training Divergence
 
-### Hyperparameter Tuning
+Likely causes and actions:
 
-The trainer automatically:
-- Adjusts learning rate (ReduceLROnPlateau)
-- Applies early stopping
-- Tracks best model
-- Clips gradients
+- Learning rate too high: reduce by 2x to 10x
+- Unstable batch composition: reduce batch size
+- Data quality issues: inspect invalid or noisy records
 
-## Evaluation
+### CLI Argument Errors
 
-### Metrics
+Actions:
 
-For regression tasks:
-- RMSE (Root Mean Square Error)
-- MAE (Mean Absolute Error)
-- R² (R-squared)
-- Pearson correlation
+- Review command help and required flags
+- Confirm checkpoint path exists
+- Activate expected Python environment
 
-For classification:
-- Accuracy
-- Precision
-- Recall
-- F1 Score
-- ROC-AUC
+### Slow Data Collection
 
-### Drug-Likeness
+Actions:
 
-- **Lipinski's Rule of Five**: MW ≤ 500, LogP ≤ 5, HBD ≤ 5, HBA ≤ 10
-- **QED**: Quantitative Estimate of Drug-likeness (0-1)
-- **SA Score**: Synthetic Accessibility (1-10, lower is easier)
+- Lower source limits for quick iteration
+- Use cached datasets for repeat runs
+- Decouple external collection from training jobs
 
-## Advanced Usage
+## 27. Extension Guide
 
-### Custom Model
+### Add a New Data Source
 
-```python
-import torch.nn as nn
-from drug_discovery.training import SelfLearningTrainer
+1. Extend data collector with new method.
+2. Normalize schema to required columns.
+3. Add source switch logic in pipeline collection path.
+4. Add test coverage for parsing and merge behavior.
 
-class CustomModel(nn.Module):
-    def __init__(self):
-        super().__init__()
-        # Your architecture
+### Add a New Model
 
-    def forward(self, x):
-        # Your forward pass
-        return x
+1. Create model module in `models`.
+2. Add selection branch in pipeline model builder.
+3. Ensure trainer compatibility for batch format.
+4. Add unit and integration tests.
 
-model = CustomModel()
-trainer = SelfLearningTrainer(model)
-```
+### Add a New CLI Command
 
-### Multi-Task Learning
+1. Register parser and options in CLI module.
+2. Implement command handler function.
+3. Add docs and examples.
+4. Add smoke tests where appropriate.
 
-```python
-from drug_discovery.models import MultiTaskModel
+## 28. Contribution Workflow
 
-multi_task = MultiTaskModel(
-    base_model=gnn_model,
-    num_tasks=5,  # Predict 5 different properties
-)
-```
+Recommended flow:
 
-### Custom Data Source
+1. Create a focused branch.
+2. Keep changes scoped and reviewable.
+3. Run local checks before PR.
+4. Update documentation with behavior changes.
+5. Include validation summary in PR description.
 
-```python
-class CustomDataCollector(DataCollector):
-    def collect_from_custom_source(self):
-        # Your custom data collection logic
-        return dataframe
+## 29. FAQ
 
-collector = CustomDataCollector()
-```
+### Is ZANE production-ready for clinical decisions?
 
-## Performance Optimization
+No. It is a research and decision-support platform requiring expert oversight and experimental validation.
 
-### GPU Acceleration
+### Can I replace built-in models?
 
-```python
-pipeline = DrugDiscoveryPipeline(device='cuda')
-```
+Yes. The architecture is modular and designed for extension.
 
-### Batch Size Tuning
+### Can I run this without a GPU?
 
-```python
-train_loader, test_loader = pipeline.prepare_datasets(
-    data,
-    batch_size=64  # Increase for better GPU utilization
-)
-```
+Yes. CPU execution is supported, but larger training jobs will be slower.
 
-### Mixed Precision Training
+### Is dashboard usage required?
 
-```python
-from torch.cuda.amp import autocast, GradScaler
+No. Dashboard is optional but recommended for operational visibility.
 
-scaler = GradScaler()
+## 30. License
 
-# In training loop
-with autocast():
-    output = model(data)
-    loss = criterion(output, target)
-
-scaler.scale(loss).backward()
-scaler.step(optimizer)
-scaler.update()
-```
-
-## Best Practices
-
-1. **Data Quality**: Always validate SMILES strings
-2. **Feature Engineering**: Use appropriate featurization for your task
-3. **Model Selection**: GNN for structure, Transformer for sequences
-4. **Ensemble**: Combine models for robust predictions
-5. **Validation**: Use separate test set, not seen during training
-6. **ADMET Early**: Filter candidates early with ADMET predictions
-
-## Troubleshooting
-
-### Common Issues
-
-**Issue**: CUDA out of memory
-**Solution**: Reduce batch size or model hidden dimension
-
-**Issue**: RDKit errors with SMILES
-**Solution**: Validate and sanitize SMILES strings
-
-**Issue**: Slow data collection
-**Solution**: Use cached data or reduce limit_per_source
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new features
-4. Submit a pull request
-
-## License
-
-CC0 1.0 Universal - Public Domain Dedication
-
-## Citation
-
-If you use this platform in your research, please cite:
-
-```bibtex
-@software{ai_drug_discovery_2024,
-  title = {AI Drug Discovery Platform},
-  author = {AI Drug Discovery Team},
-  year = {2024},
-  url = {https://github.com/cosmic-hydra/zane}
-}
-```
-
-## Acknowledgments
-
-Based on concepts from:
-- AIAgents4Pharma
-- DeepChem
-- PyTorch Geometric
-- RDKit
-
-## Support
-
-For issues and questions:
-- GitHub Issues: https://github.com/cosmic-hydra/zane/issues
-- Documentation: https://github.com/cosmic-hydra/zane/wiki
+CC0 1.0 Universal

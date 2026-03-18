@@ -1,0 +1,9 @@
+{
+  "run_id": "20260318_125307",
+  "num_training_samples": 160,
+  "num_drugs_simulated": 8,
+  "model_path": "artifacts/drug_training_sim/20260318_125307/zane_transformer.pt",
+  "results_path": "artifacts/drug_training_sim/20260318_125307/simulation_results.csv",
+  "training_best_val_loss": 0.029967810958623886,
+  "top_candidate": "Caffeine"
+}

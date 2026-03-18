@@ -20,7 +20,6 @@
   "reportUnknownMemberType": "none",
   "reportUnknownLambdaType": "none",
   "reportUnknownParameterType": "none",
-  "reportUnknownReturnType": "none",
   "reportMissingImports": "none",
   "reportMissingModuleSource": "none"
 }

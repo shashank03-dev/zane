@@ -1,0 +1,21 @@
+{
+  "run_id": "20260318_125013",
+  "base_model": "sshleifer/tiny-gpt2",
+  "keywords": [
+    "drug discovery ai",
+    "molecular docking",
+    "admet prediction",
+    "protein ligand binding"
+  ],
+  "num_pubmed_docs": 55,
+  "num_trial_docs": 0,
+  "num_training_docs": 55,
+  "train_runtime_sec": 6.5217,
+  "train_loss": 10.006978607177734,
+  "output_paths": {
+    "root": "artifacts/llm_web_training/20260318_125013",
+    "raw_data": "artifacts/llm_web_training/20260318_125013/data",
+    "model": "artifacts/llm_web_training/20260318_125013/model",
+    "checkpoints": "artifacts/llm_web_training/20260318_125013/checkpoints"
+  }
+}

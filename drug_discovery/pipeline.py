@@ -3,18 +3,18 @@ Main Drug Discovery Pipeline
 Orchestrates the entire AI drug discovery process
 """
 
-import torch
-import pandas as pd
-import numpy as np
-from typing import List, Dict, Optional, Tuple
 import os
+
+import numpy as np
+import pandas as pd
+import torch
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
 from .data import DataCollector, MolecularDataset, MolecularFeaturizer, train_test_split_molecular
-from .models import MolecularGNN, MolecularTransformer, EnsembleModel
-from .training import SelfLearningTrainer, ContinuousLearner
-from .evaluation import PropertyPredictor, ADMETPredictor, ModelEvaluator
+from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor
+from .models import EnsembleModel, MolecularGNN, MolecularTransformer
+from .training import SelfLearningTrainer
 
 
 class DrugDiscoveryPipeline:
@@ -24,10 +24,10 @@ class DrugDiscoveryPipeline:
 
     def __init__(
         self,
-        model_type: str = 'gnn',  # 'gnn', 'transformer', or 'ensemble'
-        device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
-        cache_dir: str = './data/cache',
-        checkpoint_dir: str = './checkpoints'
+        model_type: str = "gnn",  # 'gnn', 'transformer', or 'ensemble'
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        cache_dir: str = "./data/cache",
+        checkpoint_dir: str = "./checkpoints",
     ):
         """
         Args:
@@ -52,14 +52,12 @@ class DrugDiscoveryPipeline:
         self.trainer = None
         self.property_predictor = None
 
-        print(f"Drug Discovery Pipeline initialized")
+        print("Drug Discovery Pipeline initialized")
         print(f"Model type: {model_type}")
         print(f"Device: {device}")
 
     def collect_data(
-        self,
-        sources: List[str] = ['pubchem', 'chembl', 'approved_drugs'],
-        limit_per_source: int = 1000
+        self, sources: list[str] = ["pubchem", "chembl", "approved_drugs"], limit_per_source: int = 1000
     ) -> pd.DataFrame:
         """
         Collect molecular data from multiple sources
@@ -75,19 +73,19 @@ class DrugDiscoveryPipeline:
 
         datasets = []
 
-        if 'pubchem' in sources:
+        if "pubchem" in sources:
             print("\nCollecting from PubChem...")
             df = self.data_collector.collect_from_pubchem(limit=limit_per_source)
             if not df.empty:
                 datasets.append(df)
 
-        if 'chembl' in sources:
+        if "chembl" in sources:
             print("\nCollecting from ChEMBL...")
             df = self.data_collector.collect_from_chembl(limit=limit_per_source)
             if not df.empty:
                 datasets.append(df)
 
-        if 'approved_drugs' in sources:
+        if "approved_drugs" in sources:
             print("\nCollecting approved drugs...")
             df = self.data_collector.collect_approved_drugs()
             if not df.empty:
@@ -105,11 +103,11 @@ class DrugDiscoveryPipeline:
     def prepare_datasets(
         self,
         data: pd.DataFrame,
-        smiles_col: str = 'smiles',
-        target_col: Optional[str] = None,
+        smiles_col: str = "smiles",
+        target_col: str | None = None,
         test_size: float = 0.2,
-        batch_size: int = 32
-    ) -> Tuple[DataLoader, DataLoader]:
+        batch_size: int = 32,
+    ) -> tuple[DataLoader, DataLoader]:
         """
         Prepare train and test dataloaders
 
@@ -126,42 +124,27 @@ class DrugDiscoveryPipeline:
         print("\n=== Data Preparation Phase ===")
 
         # Determine featurization based on model type
-        if self.model_type == 'gnn':
-            featurization = 'graph'
+        if self.model_type == "gnn":
+            featurization = "graph"
         else:
-            featurization = 'fingerprint'
+            featurization = "fingerprint"
 
         # Create dataset
-        dataset = MolecularDataset(
-            data=data,
-            smiles_col=smiles_col,
-            target_col=target_col,
-            featurization=featurization
-        )
+        dataset = MolecularDataset(data=data, smiles_col=smiles_col, target_col=target_col, featurization=featurization)
 
         # Split dataset
-        train_dataset, test_dataset = train_test_split_molecular(
-            dataset, test_size=test_size
-        )
+        train_dataset, test_dataset = train_test_split_molecular(dataset, test_size=test_size)
 
         print(f"Train samples: {len(train_dataset)}")
         print(f"Test samples: {len(test_dataset)}")
 
         # Create dataloaders
-        if featurization == 'graph':
-            train_loader = GeometricDataLoader(
-                train_dataset, batch_size=batch_size, shuffle=True
-            )
-            test_loader = GeometricDataLoader(
-                test_dataset, batch_size=batch_size, shuffle=False
-            )
+        if featurization == "graph":
+            train_loader = GeometricDataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            test_loader = GeometricDataLoader(test_dataset, batch_size=batch_size, shuffle=False)
         else:
-            train_loader = DataLoader(
-                train_dataset, batch_size=batch_size, shuffle=True
-            )
-            test_loader = DataLoader(
-                test_dataset, batch_size=batch_size, shuffle=False
-            )
+            train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+            test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
         return train_loader, test_loader
 
@@ -177,15 +160,15 @@ class DrugDiscoveryPipeline:
         """
         print("\n=== Model Building Phase ===")
 
-        if self.model_type == 'gnn':
+        if self.model_type == "gnn":
             self.model = MolecularGNN(**model_kwargs)
             print("Built Graph Neural Network model")
 
-        elif self.model_type == 'transformer':
+        elif self.model_type == "transformer":
             self.model = MolecularTransformer(**model_kwargs)
             print("Built Transformer model")
 
-        elif self.model_type == 'ensemble':
+        elif self.model_type == "ensemble":
             # Create ensemble of GNN and Transformer
             gnn = MolecularGNN()
             transformer = MolecularTransformer()
@@ -203,8 +186,8 @@ class DrugDiscoveryPipeline:
         val_loader: DataLoader,
         num_epochs: int = 100,
         learning_rate: float = 1e-4,
-        **trainer_kwargs
-    ) -> Dict:
+        **trainer_kwargs,
+    ) -> dict:
         """
         Train the model
 
@@ -230,32 +213,22 @@ class DrugDiscoveryPipeline:
             device=self.device,
             learning_rate=learning_rate,
             save_dir=self.checkpoint_dir,
-            **trainer_kwargs
+            **trainer_kwargs,
         )
 
         # Train
-        is_graph = (self.model_type == 'gnn')
+        is_graph = self.model_type == "gnn"
         history = self.trainer.train(
-            train_loader=train_loader,
-            val_loader=val_loader,
-            num_epochs=num_epochs,
-            is_graph=is_graph
+            train_loader=train_loader, val_loader=val_loader, num_epochs=num_epochs, is_graph=is_graph
         )
 
         # Initialize property predictor
-        self.property_predictor = PropertyPredictor(
-            model=self.model,
-            device=self.device
-        )
+        self.property_predictor = PropertyPredictor(model=self.model, device=self.device)
 
         print("\n✓ Training complete!")
         return history
 
-    def predict_properties(
-        self,
-        smiles: str,
-        include_admet: bool = True
-    ) -> Dict:
+    def predict_properties(self, smiles: str, include_admet: bool = True) -> dict:
         """
         Predict properties for a molecule
 
@@ -269,23 +242,21 @@ class DrugDiscoveryPipeline:
         if self.property_predictor is None:
             raise RuntimeError("Model not trained yet. Call train() first.")
 
-        results = {'smiles': smiles}
+        results = {"smiles": smiles}
 
         # Model predictions
-        if self.model_type == 'gnn':
+        if self.model_type == "gnn":
             graph_data = self.featurizer.smiles_to_graph(smiles)
             if graph_data is not None:
                 graph_data = graph_data.to(self.device)
                 with torch.no_grad():
                     prediction = self.model(graph_data).cpu().numpy()
-                results['predicted_property'] = float(prediction[0])
+                results["predicted_property"] = float(prediction[0])
         else:
             fingerprint = self.featurizer.smiles_to_fingerprint(smiles)
             if fingerprint is not None:
-                prediction = self.property_predictor.predict_from_smiles(
-                    smiles, self.featurizer
-                )
-                results['predicted_property'] = prediction
+                prediction = self.property_predictor.predict_from_smiles(smiles, self.featurizer)
+                results["predicted_property"] = prediction
 
         # ADMET predictions
         if include_admet:
@@ -294,19 +265,16 @@ class DrugDiscoveryPipeline:
             sa_score = self.admet_predictor.calculate_synthetic_accessibility(smiles)
             toxicity = self.admet_predictor.predict_toxicity_flags(smiles)
 
-            results['lipinski_pass'] = lipinski['passes'] if lipinski else None
-            results['lipinski_violations'] = lipinski['num_violations'] if lipinski else None
-            results['qed_score'] = qed
-            results['synthetic_accessibility'] = sa_score
-            results['toxicity_flags'] = toxicity
+            results["lipinski_pass"] = lipinski["passes"] if lipinski else None
+            results["lipinski_violations"] = lipinski["num_violations"] if lipinski else None
+            results["qed_score"] = qed
+            results["synthetic_accessibility"] = sa_score
+            results["toxicity_flags"] = toxicity
 
         return results
 
     def generate_candidates(
-        self,
-        target_protein: Optional[str] = None,
-        num_candidates: int = 10,
-        filter_criteria: Optional[Dict] = None
+        self, target_protein: str | None = None, num_candidates: int = 10, filter_criteria: dict | None = None
     ) -> pd.DataFrame:
         """
         Generate drug candidate molecules
@@ -319,7 +287,7 @@ class DrugDiscoveryPipeline:
         Returns:
             DataFrame of candidate molecules
         """
-        print(f"\n=== Generating Drug Candidates ===")
+        print("\n=== Generating Drug Candidates ===")
         print(f"Target: {target_protein or 'General'}")
 
         # For demonstration, we'll use molecules from the database
@@ -334,17 +302,17 @@ class DrugDiscoveryPipeline:
 
             # Add predictions for each candidate
             predictions = []
-            for smiles in candidates['smiles']:
+            for smiles in candidates["smiles"]:
                 try:
                     pred = self.predict_properties(smiles, include_admet=True)
                     predictions.append(pred)
-                except:
+                except Exception:
                     predictions.append({})
 
             # Merge predictions
             for i, pred in enumerate(predictions):
                 for key, value in pred.items():
-                    if key != 'smiles':
+                    if key != "smiles":
                         candidates.loc[i, key] = value
 
             return candidates
@@ -352,11 +320,7 @@ class DrugDiscoveryPipeline:
             print("No cached data available. Run collect_data() first.")
             return pd.DataFrame()
 
-    def evaluate(
-        self,
-        test_loader: DataLoader,
-        is_graph: bool = None
-    ) -> Dict:
+    def evaluate(self, test_loader: DataLoader, is_graph: bool = None) -> dict:
         """
         Evaluate the model
 
@@ -368,7 +332,7 @@ class DrugDiscoveryPipeline:
             Evaluation metrics
         """
         if is_graph is None:
-            is_graph = (self.model_type == 'gnn')
+            is_graph = self.model_type == "gnn"
 
         print("\n=== Evaluation Phase ===")
 
@@ -401,17 +365,20 @@ class DrugDiscoveryPipeline:
     def save(self, filepath: str):
         """Save the pipeline"""
         if self.model is not None:
-            torch.save({
-                'model_state_dict': self.model.state_dict(),
-                'model_type': self.model_type,
-            }, filepath)
+            torch.save(
+                {
+                    "model_state_dict": self.model.state_dict(),
+                    "model_type": self.model_type,
+                },
+                filepath,
+            )
             print(f"Pipeline saved to {filepath}")
 
     def load(self, filepath: str):
         """Load the pipeline"""
         checkpoint = torch.load(filepath, map_location=self.device)
-        self.model_type = checkpoint['model_type']
+        self.model_type = checkpoint["model_type"]
         self.build_model()
-        self.model.load_state_dict(checkpoint['model_state_dict'])
+        self.model.load_state_dict(checkpoint["model_state_dict"])
         self.property_predictor = PropertyPredictor(self.model, self.device)
         print(f"Pipeline loaded from {filepath}")

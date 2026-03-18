@@ -3,7 +3,7 @@ Retrosynthesis Planning and Synthesis Feasibility Scoring
 """
 
 import logging
-from typing import List, Dict, Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -18,11 +18,7 @@ class RetrosynthesisPlanner:
     def __init__(self):
         self.reaction_templates = []
 
-    def plan_synthesis(
-        self,
-        target_smiles: str,
-        max_depth: int = 5
-    ) -> Dict:
+    def plan_synthesis(self, target_smiles: str, max_depth: int = 5) -> dict:
         """
         Plan synthetic route for a target molecule
 
@@ -40,25 +36,22 @@ class RetrosynthesisPlanner:
             # Would integrate with tools like RXNMapper, AiZynthFinder, etc.
 
             result = {
-                'target': target_smiles,
-                'success': True,
-                'num_steps': np.random.randint(2, max_depth + 1),
-                'estimated_yield': np.random.uniform(0.3, 0.9),
-                'complexity_score': np.random.uniform(1.0, 10.0),
-                'available_building_blocks': True,
-                'novel_chemistry': np.random.random() > 0.8
+                "target": target_smiles,
+                "success": True,
+                "num_steps": np.random.randint(2, max_depth + 1),
+                "estimated_yield": np.random.uniform(0.3, 0.9),
+                "complexity_score": np.random.uniform(1.0, 10.0),
+                "available_building_blocks": True,
+                "novel_chemistry": np.random.random() > 0.8,
             }
 
             return result
 
         except Exception as e:
             logger.error(f"Retrosynthesis planning error: {e}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
-    def score_synthetic_accessibility(
-        self,
-        smiles: str
-    ) -> float:
+    def score_synthetic_accessibility(self, smiles: str) -> float:
         """
         Score synthetic accessibility (1-10, lower is easier)
 
@@ -105,11 +98,7 @@ class SynthesisFeasibilityScorer:
     def __init__(self):
         pass
 
-    def score_feasibility(
-        self,
-        smiles: str,
-        retro_plan: Optional[Dict] = None
-    ) -> Dict[str, float]:
+    def score_feasibility(self, smiles: str, retro_plan: dict | None = None) -> dict[str, float]:
         """
         Comprehensive synthesis feasibility scoring
 
@@ -126,49 +115,44 @@ class SynthesisFeasibilityScorer:
 
             mol = Chem.MolFromSmiles(smiles)
             if mol is None:
-                return {'overall': 0.0}
+                return {"overall": 0.0}
 
             scores = {}
 
             # Synthetic accessibility (1-10, lower better)
             planner = RetrosynthesisPlanner()
             sa_score = planner.score_synthetic_accessibility(smiles)
-            scores['sa_score'] = 11 - sa_score  # Convert to 1-10, higher better
+            scores["sa_score"] = 11 - sa_score  # Convert to 1-10, higher better
 
             # Molecular complexity
             num_rings = Descriptors.RingCount(mol)
             num_heteroatoms = Lipinski.NumHeteroatoms(mol)
             complexity = (num_rings + num_heteroatoms) / 10.0
-            scores['complexity'] = max(0, 10 - complexity * 10)
+            scores["complexity"] = max(0, 10 - complexity * 10)
 
             # Functional group diversity (penalize exotic groups)
-            num_functional_groups = Descriptors.NumAliphaticRings(mol) + \
-                                  Descriptors.NumAromaticRings(mol)
-            scores['fg_score'] = min(10, num_functional_groups)
+            num_functional_groups = Descriptors.NumAliphaticRings(mol) + Descriptors.NumAromaticRings(mol)
+            scores["fg_score"] = min(10, num_functional_groups)
 
             # Retrosynthesis plan quality
-            if retro_plan and retro_plan.get('success'):
-                num_steps = retro_plan.get('num_steps', 5)
-                scores['retro_steps'] = max(0, 10 - num_steps)
-                scores['estimated_yield'] = retro_plan.get('estimated_yield', 0.5) * 10
+            if retro_plan and retro_plan.get("success"):
+                num_steps = retro_plan.get("num_steps", 5)
+                scores["retro_steps"] = max(0, 10 - num_steps)
+                scores["estimated_yield"] = retro_plan.get("estimated_yield", 0.5) * 10
             else:
-                scores['retro_steps'] = 5.0
-                scores['estimated_yield'] = 5.0
+                scores["retro_steps"] = 5.0
+                scores["estimated_yield"] = 5.0
 
             # Overall score (average)
-            scores['overall'] = np.mean(list(scores.values()))
+            scores["overall"] = np.mean(list(scores.values()))
 
             return scores
 
         except Exception as e:
             logger.error(f"Feasibility scoring error: {e}")
-            return {'overall': 0.0}
+            return {"overall": 0.0}
 
-    def filter_synthesizable(
-        self,
-        smiles_list: List[str],
-        threshold: float = 5.0
-    ) -> List[Tuple[str, float]]:
+    def filter_synthesizable(self, smiles_list: list[str], threshold: float = 5.0) -> list[tuple[str, float]]:
         """
         Filter molecules by synthesis feasibility
 
@@ -183,7 +167,7 @@ class SynthesisFeasibilityScorer:
 
         for smiles in smiles_list:
             scores = self.score_feasibility(smiles)
-            overall_score = scores.get('overall', 0.0)
+            overall_score = scores.get("overall", 0.0)
 
             if overall_score >= threshold:
                 feasible.append((smiles, overall_score))

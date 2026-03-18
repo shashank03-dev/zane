@@ -5,7 +5,6 @@ Transformer-based Models for Molecular Property Prediction
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional
 
 
 class MolecularTransformer(nn.Module):
@@ -21,7 +20,7 @@ class MolecularTransformer(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         output_dim: int = 1,
-        max_seq_len: int = 512
+        max_seq_len: int = 512,
     ):
         """
         Args:
@@ -50,8 +49,8 @@ class MolecularTransformer(nn.Module):
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation='gelu',
-            batch_first=True
+            activation="gelu",
+            batch_first=True,
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
 
@@ -106,14 +105,14 @@ class PositionalEncoding(nn.Module):
         pe = torch.zeros(1, max_len, d_model)
         pe[0, :, 0::2] = torch.sin(position * div_term)
         pe[0, :, 1::2] = torch.cos(position * div_term)
-        self.register_buffer('pe', pe)
+        self.register_buffer("pe", pe)
 
     def forward(self, x):
         """
         Args:
             x: Tensor, shape [batch_size, seq_len, embedding_dim]
         """
-        x = x + self.pe[:, :x.size(1), :]
+        x = x + self.pe[:, : x.size(1), :]
         return self.dropout(x)
 
 
@@ -130,7 +129,7 @@ class SMILESTransformer(nn.Module):
         num_heads: int = 8,
         dropout: float = 0.1,
         output_dim: int = 1,
-        max_seq_len: int = 256
+        max_seq_len: int = 256,
     ):
         super().__init__()
 
@@ -142,8 +141,8 @@ class SMILESTransformer(nn.Module):
             nhead=num_heads,
             dim_feedforward=hidden_dim * 4,
             dropout=dropout,
-            activation='gelu',
-            batch_first=True
+            activation="gelu",
+            batch_first=True,
         )
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers)
 
@@ -151,7 +150,7 @@ class SMILESTransformer(nn.Module):
         self.fc2 = nn.Linear(hidden_dim // 2, output_dim)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x, mask: Optional[torch.Tensor] = None):
+    def forward(self, x, mask: torch.Tensor | None = None):
         """
         Forward pass
 

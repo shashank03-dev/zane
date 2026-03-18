@@ -3,11 +3,10 @@ Multi-Objective Optimization Module
 Pareto optimization for drug candidate selection
 """
 
-import torch
-import numpy as np
-from typing import List, Dict, Callable, Optional, Tuple
 import logging
 from dataclasses import dataclass
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -15,11 +14,12 @@ logger = logging.getLogger(__name__)
 @dataclass
 class OptimizationObjective:
     """Single optimization objective"""
+
     name: str
     weight: float = 1.0
     minimize: bool = True  # True for minimization, False for maximization
-    target: Optional[float] = None
-    threshold: Optional[float] = None
+    target: float | None = None
+    threshold: float | None = None
 
 
 class MultiObjectiveOptimizer:
@@ -28,10 +28,7 @@ class MultiObjectiveOptimizer:
     Optimizes binding affinity, ADMET properties, toxicity, and synthesis
     """
 
-    def __init__(
-        self,
-        objectives: Optional[List[OptimizationObjective]] = None
-    ):
+    def __init__(self, objectives: list[OptimizationObjective] | None = None):
         """
         Args:
             objectives: List of optimization objectives
@@ -39,20 +36,16 @@ class MultiObjectiveOptimizer:
         if objectives is None:
             # Default objectives for drug discovery
             self.objectives = [
-                OptimizationObjective('binding_affinity', weight=2.0, minimize=True),
-                OptimizationObjective('qed_score', weight=1.5, minimize=False),
-                OptimizationObjective('toxicity', weight=1.0, minimize=True),
-                OptimizationObjective('synthetic_accessibility', weight=1.0, minimize=True),
-                OptimizationObjective('lipinski_violations', weight=1.0, minimize=True)
+                OptimizationObjective("binding_affinity", weight=2.0, minimize=True),
+                OptimizationObjective("qed_score", weight=1.5, minimize=False),
+                OptimizationObjective("toxicity", weight=1.0, minimize=True),
+                OptimizationObjective("synthetic_accessibility", weight=1.0, minimize=True),
+                OptimizationObjective("lipinski_violations", weight=1.0, minimize=True),
             ]
         else:
             self.objectives = objectives
 
-    def calculate_fitness(
-        self,
-        candidate: Dict[str, float],
-        weights: Optional[Dict[str, float]] = None
-    ) -> float:
+    def calculate_fitness(self, candidate: dict[str, float], weights: dict[str, float] | None = None) -> float:
         """
         Calculate weighted fitness score
 
@@ -91,12 +84,9 @@ class MultiObjectiveOptimizer:
 
         if total_weight > 0:
             return total_score / total_weight
-        return float('inf')
+        return float("inf")
 
-    def rank_candidates(
-        self,
-        candidates: List[Dict[str, float]]
-    ) -> List[Tuple[int, float, Dict[str, float]]]:
+    def rank_candidates(self, candidates: list[dict[str, float]]) -> list[tuple[int, float, dict[str, float]]]:
         """
         Rank candidates by multi-objective fitness
 
@@ -126,12 +116,7 @@ class ParetoOptimizer:
     def __init__(self):
         pass
 
-    def is_dominated(
-        self,
-        candidate1: np.ndarray,
-        candidate2: np.ndarray,
-        minimize: List[bool]
-    ) -> bool:
+    def is_dominated(self, candidate1: np.ndarray, candidate2: np.ndarray, minimize: list[bool]) -> bool:
         """
         Check if candidate1 is dominated by candidate2
 
@@ -160,11 +145,7 @@ class ParetoOptimizer:
 
         return better_in_any and not worse_in_any
 
-    def find_pareto_front(
-        self,
-        candidates: np.ndarray,
-        minimize: List[bool]
-    ) -> np.ndarray:
+    def find_pareto_front(self, candidates: np.ndarray, minimize: list[bool]) -> np.ndarray:
         """
         Find Pareto-optimal solutions
 
@@ -193,10 +174,7 @@ class ParetoOptimizer:
         return np.where(is_pareto)[0]
 
     def select_diverse_subset(
-        self,
-        pareto_candidates: np.ndarray,
-        n_select: int,
-        method: str = 'crowding'
+        self, pareto_candidates: np.ndarray, n_select: int, method: str = "crowding"
     ) -> np.ndarray:
         """
         Select diverse subset from Pareto front
@@ -212,17 +190,13 @@ class ParetoOptimizer:
         if len(pareto_candidates) <= n_select:
             return np.arange(len(pareto_candidates))
 
-        if method == 'crowding':
+        if method == "crowding":
             # Use crowding distance for diversity
             distances = self._calculate_crowding_distance(pareto_candidates)
             selected_indices = np.argsort(distances)[-n_select:]
         else:
             # Random selection
-            selected_indices = np.random.choice(
-                len(pareto_candidates),
-                size=n_select,
-                replace=False
-            )
+            selected_indices = np.random.choice(len(pareto_candidates), size=n_select, replace=False)
 
         return selected_indices
 
@@ -244,8 +218,8 @@ class ParetoOptimizer:
             sorted_indices = np.argsort(candidates[:, obj_idx])
 
             # Assign infinite distance to boundary points
-            distances[sorted_indices[0]] = float('inf')
-            distances[sorted_indices[-1]] = float('inf')
+            distances[sorted_indices[0]] = float("inf")
+            distances[sorted_indices[-1]] = float("inf")
 
             # Calculate crowding distance for middle points
             obj_range = candidates[sorted_indices[-1], obj_idx] - candidates[sorted_indices[0], obj_idx]
@@ -270,12 +244,7 @@ class ConstraintFilter:
     def __init__(self):
         self.constraints = []
 
-    def add_constraint(
-        self,
-        name: str,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None
-    ):
+    def add_constraint(self, name: str, min_value: float | None = None, max_value: float | None = None):
         """
         Add a constraint
 
@@ -284,16 +253,9 @@ class ConstraintFilter:
             min_value: Minimum allowed value
             max_value: Maximum allowed value
         """
-        self.constraints.append({
-            'name': name,
-            'min': min_value,
-            'max': max_value
-        })
+        self.constraints.append({"name": name, "min": min_value, "max": max_value})
 
-    def filter_candidates(
-        self,
-        candidates: List[Dict[str, float]]
-    ) -> List[Dict[str, float]]:
+    def filter_candidates(self, candidates: list[dict[str, float]]) -> list[dict[str, float]]:
         """
         Filter candidates by constraints
 
@@ -309,17 +271,17 @@ class ConstraintFilter:
             passes = True
 
             for constraint in self.constraints:
-                prop_name = constraint['name']
+                prop_name = constraint["name"]
                 if prop_name not in candidate:
                     continue
 
                 value = candidate[prop_name]
 
-                if constraint['min'] is not None and value < constraint['min']:
+                if constraint["min"] is not None and value < constraint["min"]:
                     passes = False
                     break
 
-                if constraint['max'] is not None and value > constraint['max']:
+                if constraint["max"] is not None and value > constraint["max"]:
                     passes = False
                     break
 

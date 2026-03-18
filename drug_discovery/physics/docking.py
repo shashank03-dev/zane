@@ -3,12 +3,10 @@ Molecular Docking Engine
 Supports AutoDock Vina and other docking methods
 """
 
-import os
-import tempfile
-import subprocess
-from typing import Dict, List, Optional, Tuple
-import numpy as np
 import logging
+import os
+import subprocess
+import tempfile
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +16,7 @@ class DockingEngine:
     Molecular docking for protein-ligand binding prediction
     """
 
-    def __init__(
-        self,
-        method: str = 'vina',  # 'vina' or 'smina'
-        exhaustiveness: int = 8,
-        num_modes: int = 9
-    ):
+    def __init__(self, method: str = "vina", exhaustiveness: int = 8, num_modes: int = 9):  # 'vina' or 'smina'
         """
         Args:
             method: Docking method to use
@@ -38,9 +31,9 @@ class DockingEngine:
         self,
         ligand_smiles: str,
         protein_pdb: str,
-        center: Tuple[float, float, float],
-        box_size: Tuple[float, float, float] = (20.0, 20.0, 20.0)
-    ) -> Dict:
+        center: tuple[float, float, float],
+        box_size: tuple[float, float, float] = (20.0, 20.0, 20.0),
+    ) -> dict:
         """
         Dock a ligand to a protein
 
@@ -60,21 +53,21 @@ class DockingEngine:
             # Convert SMILES to 3D structure
             mol = Chem.MolFromSmiles(ligand_smiles)
             if mol is None:
-                return {'success': False, 'error': 'Invalid SMILES'}
+                return {"success": False, "error": "Invalid SMILES"}
 
             mol = Chem.AddHs(mol)
             success = AllChem.EmbedMolecule(mol, randomSeed=42)
             if success == -1:
-                return {'success': False, 'error': 'Failed to generate 3D conformer'}
+                return {"success": False, "error": "Failed to generate 3D conformer"}
 
             AllChem.MMFFOptimizeMolecule(mol)
 
             # Create temporary files
             with tempfile.TemporaryDirectory() as tmpdir:
-                ligand_pdb = os.path.join(tmpdir, 'ligand.pdb')
-                ligand_pdbqt = os.path.join(tmpdir, 'ligand.pdbqt')
-                protein_pdbqt = os.path.join(tmpdir, 'protein.pdbqt')
-                output_pdbqt = os.path.join(tmpdir, 'output.pdbqt')
+                ligand_pdb = os.path.join(tmpdir, "ligand.pdb")
+                ligand_pdbqt = os.path.join(tmpdir, "ligand.pdbqt")
+                protein_pdbqt = os.path.join(tmpdir, "protein.pdbqt")
+                output_pdbqt = os.path.join(tmpdir, "output.pdbqt")
 
                 # Write ligand PDB
                 Chem.MolToPDBFile(mol, ligand_pdb)
@@ -87,33 +80,27 @@ class DockingEngine:
                     self._prepare_protein(protein_pdb, protein_pdbqt)
                 else:
                     # Assume it's a PDB string, write to file
-                    protein_pdb_file = os.path.join(tmpdir, 'protein.pdb')
-                    with open(protein_pdb_file, 'w') as f:
+                    protein_pdb_file = os.path.join(tmpdir, "protein.pdb")
+                    with open(protein_pdb_file, "w") as f:
                         f.write(protein_pdb)
                     self._prepare_protein(protein_pdb_file, protein_pdbqt)
 
                 # Run docking
-                scores = self._run_vina_docking(
-                    protein_pdbqt,
-                    ligand_pdbqt,
-                    output_pdbqt,
-                    center,
-                    box_size
-                )
+                scores = self._run_vina_docking(protein_pdbqt, ligand_pdbqt, output_pdbqt, center, box_size)
 
                 if scores:
                     return {
-                        'success': True,
-                        'binding_affinity': scores[0],  # Best score
-                        'all_scores': scores,
-                        'num_poses': len(scores)
+                        "success": True,
+                        "binding_affinity": scores[0],  # Best score
+                        "all_scores": scores,
+                        "num_poses": len(scores),
                     }
                 else:
-                    return {'success': False, 'error': 'Docking failed'}
+                    return {"success": False, "error": "Docking failed"}
 
         except Exception as e:
             logger.error(f"Docking error: {e}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def _prepare_ligand(self, pdb_file: str, pdbqt_file: str):
         """Prepare ligand for docking (PDB to PDBQT)"""
@@ -138,7 +125,7 @@ class DockingEngine:
             try:
                 cmd = f"obabel {pdb_file} -O {pdbqt_file}"
                 subprocess.run(cmd, shell=True, check=True, capture_output=True)
-            except:
+            except Exception:
                 logger.error("Protein preparation failed")
 
     def _run_vina_docking(
@@ -146,38 +133,44 @@ class DockingEngine:
         protein_pdbqt: str,
         ligand_pdbqt: str,
         output_pdbqt: str,
-        center: Tuple[float, float, float],
-        box_size: Tuple[float, float, float]
-    ) -> List[float]:
+        center: tuple[float, float, float],
+        box_size: tuple[float, float, float],
+    ) -> list[float]:
         """Run AutoDock Vina docking"""
         try:
             # Build Vina command
             cmd = [
-                'vina',
-                '--receptor', protein_pdbqt,
-                '--ligand', ligand_pdbqt,
-                '--out', output_pdbqt,
-                '--center_x', str(center[0]),
-                '--center_y', str(center[1]),
-                '--center_z', str(center[2]),
-                '--size_x', str(box_size[0]),
-                '--size_y', str(box_size[1]),
-                '--size_z', str(box_size[2]),
-                '--exhaustiveness', str(self.exhaustiveness),
-                '--num_modes', str(self.num_modes)
+                "vina",
+                "--receptor",
+                protein_pdbqt,
+                "--ligand",
+                ligand_pdbqt,
+                "--out",
+                output_pdbqt,
+                "--center_x",
+                str(center[0]),
+                "--center_y",
+                str(center[1]),
+                "--center_z",
+                str(center[2]),
+                "--size_x",
+                str(box_size[0]),
+                "--size_y",
+                str(box_size[1]),
+                "--size_z",
+                str(box_size[2]),
+                "--exhaustiveness",
+                str(self.exhaustiveness),
+                "--num_modes",
+                str(self.num_modes),
             ]
 
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(cmd, capture_output=True, text=True, check=True)
 
             # Parse output for binding affinities
             scores = []
-            for line in result.stdout.split('\n'):
-                if line.strip().startswith('1') and 'kcal/mol' in line:
+            for line in result.stdout.split("\n"):
+                if line.strip().startswith("1") and "kcal/mol" in line:
                     parts = line.split()
                     if len(parts) >= 2:
                         try:
@@ -200,11 +193,11 @@ class DockingEngine:
 
     def batch_dock(
         self,
-        ligand_smiles_list: List[str],
+        ligand_smiles_list: list[str],
         protein_pdb: str,
-        center: Tuple[float, float, float],
-        box_size: Tuple[float, float, float] = (20.0, 20.0, 20.0)
-    ) -> List[Dict]:
+        center: tuple[float, float, float],
+        box_size: tuple[float, float, float] = (20.0, 20.0, 20.0),
+    ) -> list[dict]:
         """
         Dock multiple ligands to a protein
 
@@ -227,12 +220,12 @@ class DockingEngine:
 
     def virtual_screening(
         self,
-        ligand_smiles_list: List[str],
+        ligand_smiles_list: list[str],
         protein_pdb: str,
-        center: Tuple[float, float, float],
-        box_size: Tuple[float, float, float] = (20.0, 20.0, 20.0),
-        score_threshold: float = -7.0
-    ) -> List[Tuple[str, float]]:
+        center: tuple[float, float, float],
+        box_size: tuple[float, float, float] = (20.0, 20.0, 20.0),
+        score_threshold: float = -7.0,
+    ) -> list[tuple[str, float]]:
         """
         Perform virtual screening on a library of compounds
 
@@ -251,8 +244,8 @@ class DockingEngine:
         results = self.batch_dock(ligand_smiles_list, protein_pdb, center, box_size)
 
         for smiles, result in zip(ligand_smiles_list, results):
-            if result.get('success') and result.get('binding_affinity'):
-                score = result['binding_affinity']
+            if result.get("success") and result.get("binding_affinity"):
+                score = result["binding_affinity"]
                 if score <= score_threshold:  # More negative = better binding
                     hits.append((smiles, score))
 

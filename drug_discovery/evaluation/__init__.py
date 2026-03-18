@@ -2,6 +2,6 @@
 Evaluation Module
 """
 
-from .predictor import PropertyPredictor, ADMETPredictor, ModelEvaluator
+from .predictor import ADMETPredictor, ModelEvaluator, PropertyPredictor
 
-__all__ = ['PropertyPredictor', 'ADMETPredictor', 'ModelEvaluator']
+__all__ = ["PropertyPredictor", "ADMETPredictor", "ModelEvaluator"]

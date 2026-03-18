@@ -2,8 +2,9 @@
 Tests for Drug Discovery Pipeline
 """
 
-import pytest
 import pandas as pd
+import pytest
+
 from drug_discovery import DrugDiscoveryPipeline
 
 
@@ -12,37 +13,27 @@ class TestDrugDiscoveryPipeline:
 
     def setup_method(self):
         """Setup test fixtures"""
-        self.pipeline = DrugDiscoveryPipeline(
-            model_type='gnn',
-            device='cpu'
-        )
+        self.pipeline = DrugDiscoveryPipeline(model_type="gnn", device="cpu")
 
     def test_pipeline_initialization(self):
         """Test pipeline initialization"""
         assert self.pipeline is not None
-        assert self.pipeline.model_type == 'gnn'
-        assert self.pipeline.device == 'cpu'
+        assert self.pipeline.model_type == "gnn"
+        assert self.pipeline.device == "cpu"
 
     def test_collect_data(self):
         """Test data collection (if APIs are available)"""
         # This test might be slow or fail if APIs are unavailable
         # So we make it optional
         try:
-            data = self.pipeline.collect_data(
-                sources=['pubchem'],
-                limit_per_source=10
-            )
+            data = self.pipeline.collect_data(sources=["pubchem"], limit_per_source=10)
             assert isinstance(data, pd.DataFrame)
         except Exception as e:
             pytest.skip(f"Data collection failed (expected): {e}")
 
     def test_build_model(self):
         """Test model building"""
-        model = self.pipeline.build_model(
-            node_features=8,
-            edge_features=3,
-            hidden_dim=64
-        )
+        model = self.pipeline.build_model(node_features=8, edge_features=3, hidden_dim=64)
 
         assert model is not None
 
@@ -57,10 +48,10 @@ class TestDrugDiscoveryPipeline:
         self.pipeline.build_model()
 
         # Save
-        self.pipeline.save('./test_pipeline.pt')
+        self.pipeline.save("./test_pipeline.pt")
 
         # Create new pipeline and load
-        new_pipeline = DrugDiscoveryPipeline(model_type='gnn', device='cpu')
-        new_pipeline.load('./test_pipeline.pt')
+        new_pipeline = DrugDiscoveryPipeline(model_type="gnn", device="cpu")
+        new_pipeline.load("./test_pipeline.pt")
 
         assert new_pipeline.model is not None

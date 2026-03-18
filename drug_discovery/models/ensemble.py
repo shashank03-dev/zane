@@ -4,8 +4,6 @@ Ensemble Models combining multiple approaches
 
 import torch
 import torch.nn as nn
-from typing import List, Dict
-import numpy as np
 
 
 class EnsembleModel(nn.Module):
@@ -13,7 +11,7 @@ class EnsembleModel(nn.Module):
     Ensemble of multiple models with learned weighting
     """
 
-    def __init__(self, models: List[nn.Module], learnable_weights: bool = True):
+    def __init__(self, models: list[nn.Module], learnable_weights: bool = True):
         """
         Args:
             models: List of models to ensemble
@@ -27,7 +25,7 @@ class EnsembleModel(nn.Module):
         if learnable_weights:
             self.weights = nn.Parameter(torch.ones(self.num_models) / self.num_models)
         else:
-            self.register_buffer('weights', torch.ones(self.num_models) / self.num_models)
+            self.register_buffer("weights", torch.ones(self.num_models) / self.num_models)
 
     def forward(self, *args, **kwargs):
         """
@@ -59,7 +57,7 @@ class EnsembleModel(nn.Module):
 
         for i, model in enumerate(self.models):
             pred = model(*args, **kwargs)
-            predictions[f'model_{i}'] = pred
+            predictions[f"model_{i}"] = pred
 
         return predictions
 
@@ -69,13 +67,7 @@ class MultiTaskModel(nn.Module):
     Multi-task learning model for predicting multiple properties
     """
 
-    def __init__(
-        self,
-        base_model: nn.Module,
-        num_tasks: int,
-        shared_dim: int = 128,
-        task_specific_dim: int = 64
-    ):
+    def __init__(self, base_model: nn.Module, num_tasks: int, shared_dim: int = 128, task_specific_dim: int = 64):
         """
         Args:
             base_model: Base feature extractor
@@ -89,15 +81,17 @@ class MultiTaskModel(nn.Module):
         self.num_tasks = num_tasks
 
         # Task-specific heads
-        self.task_heads = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(shared_dim, task_specific_dim),
-                nn.ReLU(),
-                nn.Dropout(0.2),
-                nn.Linear(task_specific_dim, 1)
-            )
-            for _ in range(num_tasks)
-        ])
+        self.task_heads = nn.ModuleList(
+            [
+                nn.Sequential(
+                    nn.Linear(shared_dim, task_specific_dim),
+                    nn.ReLU(),
+                    nn.Dropout(0.2),
+                    nn.Linear(task_specific_dim, 1),
+                )
+                for _ in range(num_tasks)
+            ]
+        )
 
     def forward(self, *args, **kwargs):
         """
@@ -112,7 +106,7 @@ class MultiTaskModel(nn.Module):
         # Task-specific predictions
         predictions = {}
         for i, head in enumerate(self.task_heads):
-            predictions[f'task_{i}'] = head(shared_features)
+            predictions[f"task_{i}"] = head(shared_features)
 
         return predictions
 
@@ -122,13 +116,7 @@ class HybridModel(nn.Module):
     Hybrid model combining GNN and Transformer
     """
 
-    def __init__(
-        self,
-        gnn_model: nn.Module,
-        transformer_model: nn.Module,
-        fusion_dim: int = 128,
-        output_dim: int = 1
-    ):
+    def __init__(self, gnn_model: nn.Module, transformer_model: nn.Module, fusion_dim: int = 128, output_dim: int = 1):
         """
         Args:
             gnn_model: Graph neural network
@@ -148,7 +136,7 @@ class HybridModel(nn.Module):
             nn.Dropout(0.2),
             nn.Linear(fusion_dim, fusion_dim // 2),
             nn.ReLU(),
-            nn.Linear(fusion_dim // 2, output_dim)
+            nn.Linear(fusion_dim // 2, output_dim),
         )
 
     def forward(self, graph_data, fingerprint_data):

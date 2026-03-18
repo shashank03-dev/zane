@@ -3,10 +3,10 @@ Bayesian Optimization and Uncertainty Estimation
 Uses Gaussian Processes for exploration-exploitation
 """
 
-import torch
-import numpy as np
-from typing import List, Dict, Tuple, Optional, Callable
 import logging
+
+import numpy as np
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -19,10 +19,10 @@ class BayesianOptimizer:
 
     def __init__(
         self,
-        bounds: List[Tuple[float, float]],
-        acquisition_function: str = 'ei',  # 'ei', 'ucb', 'poi'
+        bounds: list[tuple[float, float]],
+        acquisition_function: str = "ei",  # 'ei', 'ucb', 'poi'
         kappa: float = 2.576,  # For UCB
-        xi: float = 0.01  # For EI/POI
+        xi: float = 0.01,  # For EI/POI
     ):
         """
         Args:
@@ -39,10 +39,7 @@ class BayesianOptimizer:
         self.X_observed = []
         self.y_observed = []
 
-    def suggest_next(
-        self,
-        n_suggestions: int = 1
-    ) -> List[np.ndarray]:
+    def suggest_next(self, n_suggestions: int = 1) -> list[np.ndarray]:
         """
         Suggest next candidates to evaluate
 
@@ -57,19 +54,12 @@ class BayesianOptimizer:
         for _ in range(n_suggestions):
             # Random suggestion (placeholder for actual BO)
             # In full implementation, would use GPyTorch/BoTorch
-            suggestion = np.array([
-                np.random.uniform(low, high)
-                for low, high in self.bounds
-            ])
+            suggestion = np.array([np.random.uniform(low, high) for low, high in self.bounds])
             suggestions.append(suggestion)
 
         return suggestions
 
-    def observe(
-        self,
-        X: np.ndarray,
-        y: float
-    ):
+    def observe(self, X: np.ndarray, y: float):
         """
         Add observation to the model
 
@@ -82,7 +72,7 @@ class BayesianOptimizer:
 
         logger.info(f"Observed: X={X}, y={y:.4f}")
 
-    def get_best(self) -> Tuple[np.ndarray, float]:
+    def get_best(self) -> tuple[np.ndarray, float]:
         """
         Get best observed parameters and value
 
@@ -101,11 +91,7 @@ class UncertaintyEstimator:
     Estimate prediction uncertainty using ensembles or dropout
     """
 
-    def __init__(
-        self,
-        models: List = None,
-        method: str = 'ensemble'  # 'ensemble' or 'mc_dropout'
-    ):
+    def __init__(self, models: list = None, method: str = "ensemble"):  # 'ensemble' or 'mc_dropout'
         """
         Args:
             models: List of models for ensemble
@@ -114,10 +100,7 @@ class UncertaintyEstimator:
         self.models = models or []
         self.method = method
 
-    def predict_with_uncertainty(
-        self,
-        x: torch.Tensor
-    ) -> Tuple[float, float]:
+    def predict_with_uncertainty(self, x: torch.Tensor) -> tuple[float, float]:
         """
         Predict with uncertainty estimate
 
@@ -127,7 +110,7 @@ class UncertaintyEstimator:
         Returns:
             (mean_prediction, uncertainty)
         """
-        if self.method == 'ensemble' and len(self.models) > 0:
+        if self.method == "ensemble" and len(self.models) > 0:
             predictions = []
 
             for model in self.models:
@@ -146,11 +129,7 @@ class UncertaintyEstimator:
             # Placeholder for MC Dropout
             return 0.0, 0.0
 
-    def get_confidence_interval(
-        self,
-        x: torch.Tensor,
-        confidence: float = 0.95
-    ) -> Tuple[float, float, float]:
+    def get_confidence_interval(self, x: torch.Tensor, confidence: float = 0.95) -> tuple[float, float, float]:
         """
         Get confidence interval for prediction
 
@@ -179,7 +158,7 @@ class ActiveLearner:
     def __init__(
         self,
         uncertainty_estimator: UncertaintyEstimator,
-        strategy: str = 'uncertainty'  # 'uncertainty', 'diverse', 'hybrid'
+        strategy: str = "uncertainty",  # 'uncertainty', 'diverse', 'hybrid'
     ):
         """
         Args:
@@ -189,11 +168,7 @@ class ActiveLearner:
         self.uncertainty_estimator = uncertainty_estimator
         self.strategy = strategy
 
-    def select_samples(
-        self,
-        candidates: List[torch.Tensor],
-        n_samples: int = 10
-    ) -> List[int]:
+    def select_samples(self, candidates: list[torch.Tensor], n_samples: int = 10) -> list[int]:
         """
         Select most informative samples
 
@@ -204,7 +179,7 @@ class ActiveLearner:
         Returns:
             Indices of selected samples
         """
-        if self.strategy == 'uncertainty':
+        if self.strategy == "uncertainty":
             # Select samples with highest uncertainty
             uncertainties = []
 
@@ -215,21 +190,13 @@ class ActiveLearner:
             # Select top n_samples by uncertainty
             selected_indices = np.argsort(uncertainties)[-n_samples:]
 
-        elif self.strategy == 'diverse':
+        elif self.strategy == "diverse":
             # Select diverse samples (placeholder)
-            selected_indices = np.random.choice(
-                len(candidates),
-                size=min(n_samples, len(candidates)),
-                replace=False
-            )
+            selected_indices = np.random.choice(len(candidates), size=min(n_samples, len(candidates)), replace=False)
 
         else:
             # Hybrid strategy
-            selected_indices = np.random.choice(
-                len(candidates),
-                size=min(n_samples, len(candidates)),
-                replace=False
-            )
+            selected_indices = np.random.choice(len(candidates), size=min(n_samples, len(candidates)), replace=False)
 
         logger.info(f"Selected {len(selected_indices)} samples using {self.strategy} strategy")
 

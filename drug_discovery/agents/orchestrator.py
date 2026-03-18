@@ -4,7 +4,6 @@ Each agent handles a specific aspect of the drug discovery pipeline
 """
 
 import logging
-from typing import List, Dict, Optional
 from abc import ABC, abstractmethod
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ class BaseAgent(ABC):
         self.state = {}
 
     @abstractmethod
-    def execute(self, input_data: Dict) -> Dict:
+    def execute(self, input_data: dict) -> dict:
         """Execute agent's main function"""
         pass
 
@@ -41,7 +40,7 @@ class GeneratorAgent(BaseAgent):
         super().__init__("Generator")
         self.model = model
 
-    def execute(self, input_data: Dict) -> Dict:
+    def execute(self, input_data: dict) -> dict:
         """
         Generate drug candidates
 
@@ -57,24 +56,15 @@ class GeneratorAgent(BaseAgent):
         """
         logger.info(f"{self.name} agent generating candidates...")
 
-        target = input_data.get('target_protein')
-        num_candidates = input_data.get('num_candidates', 10)
+        num_candidates = input_data.get("num_candidates", 10)
 
         # Placeholder for actual generation (would use VAE, GAN, RL, etc.)
         candidates = []
         for i in range(num_candidates):
-            candidate = {
-                'smiles': f'C1=CC=CC=C1',  # Placeholder SMILES
-                'generation_score': 0.8,
-                'id': f'gen_{i}'
-            }
+            candidate = {"smiles": "C1=CC=CC=C1", "generation_score": 0.8, "id": f"gen_{i}"}  # Placeholder SMILES
             candidates.append(candidate)
 
-        result = {
-            'success': True,
-            'candidates': candidates,
-            'num_generated': len(candidates)
-        }
+        result = {"success": True, "candidates": candidates, "num_generated": len(candidates)}
 
         return result
 
@@ -90,7 +80,7 @@ class EvaluatorAgent(BaseAgent):
         self.docking_engine = docking_engine
         self.admet_predictor = admet_predictor
 
-    def execute(self, input_data: Dict) -> Dict:
+    def execute(self, input_data: dict) -> dict:
         """
         Evaluate drug candidates
 
@@ -106,39 +96,36 @@ class EvaluatorAgent(BaseAgent):
         """
         logger.info(f"{self.name} agent evaluating candidates...")
 
-        candidates = input_data.get('candidates', [])
-        criteria = input_data.get('criteria', ['binding', 'admet', 'toxicity'])
+        candidates = input_data.get("candidates", [])
+        criteria = input_data.get("criteria", ["binding", "admet", "toxicity"])
 
         evaluated_candidates = []
 
         for candidate in candidates:
-            smiles = candidate.get('smiles')
+            smiles = candidate.get("smiles")
 
             # Evaluate on specified criteria
-            evaluation = {
-                'smiles': smiles,
-                'id': candidate.get('id')
-            }
+            evaluation = {"smiles": smiles, "id": candidate.get("id")}
 
-            if 'binding' in criteria and self.docking_engine:
+            if "binding" in criteria and self.docking_engine:
                 # Placeholder for docking
-                evaluation['binding_affinity'] = -8.5
+                evaluation["binding_affinity"] = -8.5
 
-            if 'admet' in criteria and self.admet_predictor:
+            if "admet" in criteria and self.admet_predictor:
                 # Placeholder for ADMET
-                evaluation['qed_score'] = 0.75
-                evaluation['lipinski_pass'] = True
+                evaluation["qed_score"] = 0.75
+                evaluation["lipinski_pass"] = True
 
-            if 'toxicity' in criteria:
+            if "toxicity" in criteria:
                 # Placeholder for toxicity
-                evaluation['toxicity_score'] = 0.2
+                evaluation["toxicity_score"] = 0.2
 
             evaluated_candidates.append(evaluation)
 
         result = {
-            'success': True,
-            'evaluated_candidates': evaluated_candidates,
-            'num_evaluated': len(evaluated_candidates)
+            "success": True,
+            "evaluated_candidates": evaluated_candidates,
+            "num_evaluated": len(evaluated_candidates),
         }
 
         return result
@@ -153,7 +140,7 @@ class PlannerAgent(BaseAgent):
     def __init__(self):
         super().__init__("Planner")
 
-    def execute(self, input_data: Dict) -> Dict:
+    def execute(self, input_data: dict) -> dict:
         """
         Plan next experiments
 
@@ -169,23 +156,20 @@ class PlannerAgent(BaseAgent):
         """
         logger.info(f"{self.name} agent creating experimental plan...")
 
-        candidates = input_data.get('evaluated_candidates', [])
-        budget = input_data.get('budget', 10)
+        candidates = input_data.get("evaluated_candidates", [])
+        budget = input_data.get("budget", 10)
 
         # Sort candidates by fitness
-        sorted_candidates = sorted(
-            candidates,
-            key=lambda x: x.get('binding_affinity', 0)
-        )
+        sorted_candidates = sorted(candidates, key=lambda x: x.get("binding_affinity", 0))
 
         # Select top candidates within budget
         selected = sorted_candidates[:budget]
 
         plan = {
-            'success': True,
-            'selected_candidates': selected,
-            'num_selected': len(selected),
-            'next_action': 'synthesize' if len(selected) > 0 else 'generate_more'
+            "success": True,
+            "selected_candidates": selected,
+            "num_selected": len(selected),
+            "next_action": "synthesize" if len(selected) > 0 else "generate_more",
         }
 
         return plan
@@ -201,7 +185,7 @@ class OptimizerAgent(BaseAgent):
         super().__init__("Optimizer")
         self.optimizer = optimizer
 
-    def execute(self, input_data: Dict) -> Dict:
+    def execute(self, input_data: dict) -> dict:
         """
         Optimize candidates
 
@@ -217,22 +201,14 @@ class OptimizerAgent(BaseAgent):
         """
         logger.info(f"{self.name} agent optimizing candidates...")
 
-        candidates = input_data.get('candidates', [])
+        candidates = input_data.get("candidates", [])
 
         # Placeholder for multi-objective optimization
         optimized = []
         for candidate in candidates[:5]:  # Top 5
-            optimized.append({
-                **candidate,
-                'optimized': True,
-                'pareto_optimal': True
-            })
+            optimized.append({**candidate, "optimized": True, "pareto_optimal": True})
 
-        result = {
-            'success': True,
-            'optimized_candidates': optimized,
-            'num_optimized': len(optimized)
-        }
+        result = {"success": True, "optimized_candidates": optimized, "num_optimized": len(optimized)}
 
         return result
 
@@ -250,12 +226,7 @@ class AgentOrchestrator:
 
         self.workflow_history = []
 
-    def run_discovery_cycle(
-        self,
-        target_protein: str,
-        num_candidates: int = 20,
-        budget: int = 10
-    ) -> Dict:
+    def run_discovery_cycle(self, target_protein: str, num_candidates: int = 20, budget: int = 10) -> dict:
         """
         Run a complete discovery cycle
 
@@ -267,67 +238,56 @@ class AgentOrchestrator:
         Returns:
             Cycle results
         """
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info("Starting Drug Discovery Cycle")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         # Step 1: Generate candidates
-        gen_result = self.generator.execute({
-            'target_protein': target_protein,
-            'num_candidates': num_candidates
-        })
+        gen_result = self.generator.execute({"target_protein": target_protein, "num_candidates": num_candidates})
 
-        if not gen_result.get('success'):
-            return {'success': False, 'error': 'Generation failed'}
+        if not gen_result.get("success"):
+            return {"success": False, "error": "Generation failed"}
 
         # Step 2: Evaluate candidates
-        eval_result = self.evaluator.execute({
-            'candidates': gen_result['candidates'],
-            'criteria': ['binding', 'admet', 'toxicity']
-        })
+        eval_result = self.evaluator.execute(
+            {"candidates": gen_result["candidates"], "criteria": ["binding", "admet", "toxicity"]}
+        )
 
-        if not eval_result.get('success'):
-            return {'success': False, 'error': 'Evaluation failed'}
+        if not eval_result.get("success"):
+            return {"success": False, "error": "Evaluation failed"}
 
         # Step 3: Plan experiments
-        plan_result = self.planner.execute({
-            'evaluated_candidates': eval_result['evaluated_candidates'],
-            'budget': budget
-        })
+        plan_result = self.planner.execute(
+            {"evaluated_candidates": eval_result["evaluated_candidates"], "budget": budget}
+        )
 
-        if not plan_result.get('success'):
-            return {'success': False, 'error': 'Planning failed'}
+        if not plan_result.get("success"):
+            return {"success": False, "error": "Planning failed"}
 
         # Step 4: Optimize
-        opt_result = self.optimizer.execute({
-            'candidates': plan_result['selected_candidates'],
-            'objectives': ['binding_affinity', 'qed_score']
-        })
+        opt_result = self.optimizer.execute(
+            {"candidates": plan_result["selected_candidates"], "objectives": ["binding_affinity", "qed_score"]}
+        )
 
         # Compile results
         cycle_result = {
-            'success': True,
-            'num_generated': gen_result['num_generated'],
-            'num_evaluated': eval_result['num_evaluated'],
-            'num_selected': plan_result['num_selected'],
-            'num_optimized': opt_result['num_optimized'],
-            'final_candidates': opt_result['optimized_candidates']
+            "success": True,
+            "num_generated": gen_result["num_generated"],
+            "num_evaluated": eval_result["num_evaluated"],
+            "num_selected": plan_result["num_selected"],
+            "num_optimized": opt_result["num_optimized"],
+            "final_candidates": opt_result["optimized_candidates"],
         }
 
         self.workflow_history.append(cycle_result)
 
-        logger.info("="*60)
+        logger.info("=" * 60)
         logger.info(f"Cycle Complete: {cycle_result['num_optimized']} optimized candidates")
-        logger.info("="*60)
+        logger.info("=" * 60)
 
         return cycle_result
 
-    def run_closed_loop(
-        self,
-        target_protein: str,
-        num_cycles: int = 5,
-        candidates_per_cycle: int = 20
-    ) -> List[Dict]:
+    def run_closed_loop(self, target_protein: str, num_cycles: int = 5, candidates_per_cycle: int = 20) -> list[dict]:
         """
         Run closed-loop active learning cycles
 
@@ -344,14 +304,11 @@ class AgentOrchestrator:
         results = []
 
         for cycle in range(num_cycles):
-            logger.info(f"\n{'='*60}")
+            logger.info(f"\n{'=' * 60}")
             logger.info(f"Cycle {cycle + 1}/{num_cycles}")
-            logger.info(f"{'='*60}\n")
+            logger.info(f"{'=' * 60}\n")
 
-            cycle_result = self.run_discovery_cycle(
-                target_protein=target_protein,
-                num_candidates=candidates_per_cycle
-            )
+            cycle_result = self.run_discovery_cycle(target_protein=target_protein, num_candidates=candidates_per_cycle)
 
             results.append(cycle_result)
 

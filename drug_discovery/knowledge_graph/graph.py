@@ -4,7 +4,7 @@ Stores entities and relationships for reasoning
 """
 
 import logging
-from typing import List, Dict, Tuple, Optional, Set
+
 import networkx as nx
 
 logger = logging.getLogger(__name__)
@@ -19,15 +19,10 @@ class DrugKnowledgeGraph:
 
     def __init__(self):
         self.graph = nx.MultiDiGraph()
-        self.entity_types = {'molecule', 'protein', 'disease', 'pathway'}
-        self.relation_types = {'binds_to', 'inhibits', 'activates', 'treats', 'associated_with'}
+        self.entity_types = {"molecule", "protein", "disease", "pathway"}
+        self.relation_types = {"binds_to", "inhibits", "activates", "treats", "associated_with"}
 
-    def add_entity(
-        self,
-        entity_id: str,
-        entity_type: str,
-        properties: Optional[Dict] = None
-    ):
+    def add_entity(self, entity_id: str, entity_type: str, properties: dict | None = None):
         """
         Add an entity to the graph
 
@@ -40,17 +35,11 @@ class DrugKnowledgeGraph:
             logger.warning(f"Unknown entity type: {entity_type}")
 
         properties = properties or {}
-        properties['type'] = entity_type
+        properties["type"] = entity_type
 
         self.graph.add_node(entity_id, **properties)
 
-    def add_relation(
-        self,
-        source: str,
-        target: str,
-        relation_type: str,
-        properties: Optional[Dict] = None
-    ):
+    def add_relation(self, source: str, target: str, relation_type: str, properties: dict | None = None):
         """
         Add a relationship between entities
 
@@ -64,16 +53,16 @@ class DrugKnowledgeGraph:
             logger.warning(f"Unknown relation type: {relation_type}")
 
         properties = properties or {}
-        properties['relation'] = relation_type
+        properties["relation"] = relation_type
 
         self.graph.add_edge(source, target, **properties)
 
     def query_relations(
         self,
         entity_id: str,
-        relation_type: Optional[str] = None,
-        direction: str = 'outgoing'  # 'outgoing', 'incoming', or 'both'
-    ) -> List[Tuple[str, str, Dict]]:
+        relation_type: str | None = None,
+        direction: str = "outgoing",  # 'outgoing', 'incoming', or 'both'
+    ) -> list[tuple[str, str, dict]]:
         """
         Query relationships for an entity
 
@@ -87,27 +76,23 @@ class DrugKnowledgeGraph:
         """
         results = []
 
-        if direction in ['outgoing', 'both']:
+        if direction in ["outgoing", "both"]:
             for target in self.graph.successors(entity_id):
                 edges = self.graph[entity_id][target]
                 for key, data in edges.items():
-                    if relation_type is None or data.get('relation') == relation_type:
+                    if relation_type is None or data.get("relation") == relation_type:
                         results.append((entity_id, target, data))
 
-        if direction in ['incoming', 'both']:
+        if direction in ["incoming", "both"]:
             for source in self.graph.predecessors(entity_id):
                 edges = self.graph[source][entity_id]
                 for key, data in edges.items():
-                    if relation_type is None or data.get('relation') == relation_type:
+                    if relation_type is None or data.get("relation") == relation_type:
                         results.append((source, entity_id, data))
 
         return results
 
-    def find_shortest_path(
-        self,
-        source: str,
-        target: str
-    ) -> Optional[List[str]]:
+    def find_shortest_path(self, source: str, target: str) -> list[str] | None:
         """
         Find shortest path between entities
 
@@ -124,11 +109,7 @@ class DrugKnowledgeGraph:
         except nx.NetworkXNoPath:
             return None
 
-    def get_neighbors(
-        self,
-        entity_id: str,
-        max_hops: int = 1
-    ) -> Set[str]:
+    def get_neighbors(self, entity_id: str, max_hops: int = 1) -> set[str]:
         """
         Get neighbors within max_hops
 
@@ -166,10 +147,7 @@ class DrugKnowledgeGraph:
 
         return neighbors
 
-    def get_entity_properties(
-        self,
-        entity_id: str
-    ) -> Optional[Dict]:
+    def get_entity_properties(self, entity_id: str) -> dict | None:
         """
         Get properties of an entity
 
@@ -192,10 +170,7 @@ class KnowledgeGraphBuilder:
     def __init__(self, kg: DrugKnowledgeGraph):
         self.kg = kg
 
-    def build_from_chembl(
-        self,
-        bioactivity_data: List[Dict]
-    ):
+    def build_from_chembl(self, bioactivity_data: list[dict]):
         """
         Build graph from ChEMBL bioactivity data
 
@@ -204,42 +179,29 @@ class KnowledgeGraphBuilder:
         """
         for record in bioactivity_data:
             # Add molecule
-            mol_id = record.get('molecule_chembl_id')
+            mol_id = record.get("molecule_chembl_id")
             if mol_id:
-                self.kg.add_entity(
-                    mol_id,
-                    'molecule',
-                    {'smiles': record.get('canonical_smiles')}
-                )
+                self.kg.add_entity(mol_id, "molecule", {"smiles": record.get("canonical_smiles")})
 
             # Add target
-            target_id = record.get('target_chembl_id')
+            target_id = record.get("target_chembl_id")
             if target_id:
-                self.kg.add_entity(
-                    target_id,
-                    'protein',
-                    {'name': record.get('target_pref_name')}
-                )
+                self.kg.add_entity(target_id, "protein", {"name": record.get("target_pref_name")})
 
             # Add interaction
             if mol_id and target_id:
                 self.kg.add_relation(
                     mol_id,
                     target_id,
-                    'binds_to',
-                    {
-                        'pchembl_value': record.get('pchembl_value'),
-                        'assay_type': record.get('assay_type')
-                    }
+                    "binds_to",
+                    {"pchembl_value": record.get("pchembl_value"), "assay_type": record.get("assay_type")},
                 )
 
-        logger.info(f"Built graph: {self.kg.graph.number_of_nodes()} nodes, "
-                   f"{self.kg.graph.number_of_edges()} edges")
+        logger.info(
+            f"Built graph: {self.kg.graph.number_of_nodes()} nodes, " f"{self.kg.graph.number_of_edges()} edges"
+        )
 
-    def build_from_literature(
-        self,
-        articles: List[Dict]
-    ):
+    def build_from_literature(self, articles: list[dict]):
         """
         Build graph from literature mentions
 

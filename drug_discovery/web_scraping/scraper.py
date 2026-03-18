@@ -3,11 +3,11 @@ Biomedical Web Scraping and Data Ingestion
 Collects data from PubMed, bioRxiv, clinical trials, patents
 """
 
-import requests
 import logging
-from typing import List, Dict, Optional
-from datetime import datetime, timedelta
 import time
+from datetime import datetime, timedelta
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ class PubMedAPI:
     PubMed API client for scientific literature
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         """
         Args:
             api_key: NCBI API key (optional, increases rate limits)
@@ -26,12 +26,7 @@ class PubMedAPI:
         self.base_url = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
         self.rate_limit_delay = 0.34 if api_key else 1.0  # seconds
 
-    def search(
-        self,
-        query: str,
-        max_results: int = 100,
-        date_from: Optional[str] = None
-    ) -> List[str]:
+    def search(self, query: str, max_results: int = 100, date_from: str | None = None) -> list[str]:
         """
         Search PubMed for articles
 
@@ -45,19 +40,14 @@ class PubMedAPI:
         """
         try:
             # Build search URL
-            params = {
-                'db': 'pubmed',
-                'term': query,
-                'retmax': max_results,
-                'retmode': 'json'
-            }
+            params = {"db": "pubmed", "term": query, "retmax": max_results, "retmode": "json"}
 
             if self.api_key:
-                params['api_key'] = self.api_key
+                params["api_key"] = self.api_key
 
             if date_from:
-                params['datetype'] = 'pdat'
-                params['mindate'] = date_from
+                params["datetype"] = "pdat"
+                params["mindate"] = date_from
 
             # Execute search
             search_url = f"{self.base_url}/esearch.fcgi"
@@ -65,7 +55,7 @@ class PubMedAPI:
             response.raise_for_status()
 
             data = response.json()
-            pmids = data.get('esearchresult', {}).get('idlist', [])
+            pmids = data.get("esearchresult", {}).get("idlist", [])
 
             logger.info(f"Found {len(pmids)} articles for query: {query}")
             time.sleep(self.rate_limit_delay)
@@ -76,10 +66,7 @@ class PubMedAPI:
             logger.error(f"PubMed search error: {e}")
             return []
 
-    def fetch_abstracts(
-        self,
-        pmids: List[str]
-    ) -> List[Dict]:
+    def fetch_abstracts(self, pmids: list[str]) -> list[dict]:
         """
         Fetch abstracts for PubMed IDs
 
@@ -96,17 +83,13 @@ class PubMedAPI:
             batch_size = 100
 
             for i in range(0, len(pmids), batch_size):
-                batch = pmids[i:i+batch_size]
-                pmid_str = ','.join(batch)
+                batch = pmids[i : i + batch_size]
+                pmid_str = ",".join(batch)
 
-                params = {
-                    'db': 'pubmed',
-                    'id': pmid_str,
-                    'retmode': 'xml'
-                }
+                params = {"db": "pubmed", "id": pmid_str, "retmode": "xml"}
 
                 if self.api_key:
-                    params['api_key'] = self.api_key
+                    params["api_key"] = self.api_key
 
                 fetch_url = f"{self.base_url}/efetch.fcgi"
                 response = requests.get(fetch_url, params=params)
@@ -116,10 +99,10 @@ class PubMedAPI:
                 # Placeholder for actual parsing
                 for pmid in batch:
                     article = {
-                        'pmid': pmid,
-                        'title': f'Article {pmid}',
-                        'abstract': 'Abstract text...',
-                        'date': datetime.now().isoformat()
+                        "pmid": pmid,
+                        "title": f"Article {pmid}",
+                        "abstract": "Abstract text...",
+                        "date": datetime.now().isoformat(),
                     }
                     articles.append(article)
 
@@ -140,17 +123,9 @@ class BiomedicalScraper:
 
     def __init__(self):
         self.pubmed_api = PubMedAPI()
-        self.trusted_domains = [
-            'nih.gov', 'cdc.gov', 'who.int', '.edu',
-            'ebi.ac.uk', 'ncbi.nlm.nih.gov'
-        ]
+        self.trusted_domains = ["nih.gov", "cdc.gov", "who.int", ".edu", "ebi.ac.uk", "ncbi.nlm.nih.gov"]
 
-    def scrape_drug_research(
-        self,
-        keywords: List[str],
-        max_per_keyword: int = 50,
-        days_back: int = 30
-    ) -> List[Dict]:
+    def scrape_drug_research(self, keywords: list[str], max_per_keyword: int = 50, days_back: int = 30) -> list[dict]:
         """
         Scrape recent drug research literature
 
@@ -163,17 +138,13 @@ class BiomedicalScraper:
             List of articles
         """
         all_articles = []
-        date_from = (datetime.now() - timedelta(days=days_back)).strftime('%Y/%m/%d')
+        date_from = (datetime.now() - timedelta(days=days_back)).strftime("%Y/%m/%d")
 
         for keyword in keywords:
             query = f"{keyword} AND (drug OR molecule OR compound)"
 
             # Search PubMed
-            pmids = self.pubmed_api.search(
-                query=query,
-                max_results=max_per_keyword,
-                date_from=date_from
-            )
+            pmids = self.pubmed_api.search(query=query, max_results=max_per_keyword, date_from=date_from)
 
             # Fetch abstracts
             articles = self.pubmed_api.fetch_abstracts(pmids)
@@ -182,11 +153,7 @@ class BiomedicalScraper:
         logger.info(f"Scraped {len(all_articles)} total articles")
         return all_articles
 
-    def scrape_clinical_trials(
-        self,
-        condition: str,
-        max_results: int = 100
-    ) -> List[Dict]:
+    def scrape_clinical_trials(self, condition: str, max_results: int = 100) -> list[dict]:
         """
         Scrape ClinicalTrials.gov data
 
@@ -202,17 +169,17 @@ class BiomedicalScraper:
             base_url = "https://clinicaltrials.gov/api/query/study_fields"
 
             params = {
-                'expr': condition,
-                'fields': 'NCTId,BriefTitle,Condition,InterventionName,Phase',
-                'max_rnk': max_results,
-                'fmt': 'json'
+                "expr": condition,
+                "fields": "NCTId,BriefTitle,Condition,InterventionName,Phase",
+                "max_rnk": max_results,
+                "fmt": "json",
             }
 
             response = requests.get(base_url, params=params)
             response.raise_for_status()
 
             data = response.json()
-            trials = data.get('StudyFieldsResponse', {}).get('StudyFields', [])
+            trials = data.get("StudyFieldsResponse", {}).get("StudyFields", [])
 
             logger.info(f"Scraped {len(trials)} clinical trials for {condition}")
             return trials
@@ -230,10 +197,7 @@ class WebDataProcessor:
     def __init__(self):
         pass
 
-    def extract_molecules(
-        self,
-        text: str
-    ) -> List[str]:
+    def extract_molecules(self, text: str) -> list[str]:
         """
         Extract molecule names and identifiers from text
 
@@ -249,10 +213,8 @@ class WebDataProcessor:
 
         # Simple pattern matching (replace with actual NER)
         import re
-        patterns = [
-            r'\b[A-Z][a-z]+\s+(inhibitor|antagonist|agonist)\b',
-            r'\b[A-Z]{2,}\d*\b'  # Abbreviations
-        ]
+
+        patterns = [r"\b[A-Z][a-z]+\s+(inhibitor|antagonist|agonist)\b", r"\b[A-Z]{2,}\d*\b"]  # Abbreviations
 
         for pattern in patterns:
             matches = re.findall(pattern, text)
@@ -260,11 +222,7 @@ class WebDataProcessor:
 
         return list(set(molecules))
 
-    def deduplicate(
-        self,
-        articles: List[Dict],
-        key: str = 'pmid'
-    ) -> List[Dict]:
+    def deduplicate(self, articles: list[dict], key: str = "pmid") -> list[dict]:
         """
         Remove duplicate articles
 
@@ -288,11 +246,7 @@ class WebDataProcessor:
         logger.info(f"Deduplicated: {len(articles)} → {len(unique)}")
         return unique
 
-    def filter_quality(
-        self,
-        articles: List[Dict],
-        min_abstract_length: int = 100
-    ) -> List[Dict]:
+    def filter_quality(self, articles: list[dict], min_abstract_length: int = 100) -> list[dict]:
         """
         Filter articles by quality criteria
 
@@ -306,7 +260,7 @@ class WebDataProcessor:
         filtered = []
 
         for article in articles:
-            abstract = article.get('abstract', '')
+            abstract = article.get("abstract", "")
 
             if len(abstract) >= min_abstract_length:
                 filtered.append(article)

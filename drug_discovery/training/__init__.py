@@ -2,6 +2,6 @@
 Training Module
 """
 
-from .trainer import SelfLearningTrainer, ContinuousLearner
+from .trainer import ContinuousLearner, SelfLearningTrainer
 
-__all__ = ['SelfLearningTrainer', 'ContinuousLearner']
+__all__ = ["SelfLearningTrainer", "ContinuousLearner"]

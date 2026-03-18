@@ -3,17 +3,16 @@ Self-Learning Training Pipeline
 Automatically trains models with continuous learning capabilities
 """
 
+import os
+from collections.abc import Callable
+from datetime import datetime
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from torch_geometric.loader import DataLoader as GeometricDataLoader
-import numpy as np
-from typing import Dict, Optional, List, Callable
 from tqdm import tqdm
-import os
-import json
-from datetime import datetime
 
 
 class SelfLearningTrainer:
@@ -25,11 +24,11 @@ class SelfLearningTrainer:
     def __init__(
         self,
         model: nn.Module,
-        device: str = 'cuda' if torch.cuda.is_available() else 'cpu',
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
         learning_rate: float = 1e-4,
         weight_decay: float = 1e-5,
         patience: int = 10,
-        save_dir: str = './checkpoints'
+        save_dir: str = "./checkpoints",
     ):
         """
         Args:
@@ -50,35 +49,22 @@ class SelfLearningTrainer:
         os.makedirs(save_dir, exist_ok=True)
 
         # Optimizer and scheduler
-        self.optimizer = optim.AdamW(
-            model.parameters(),
-            lr=learning_rate,
-            weight_decay=weight_decay
-        )
+        self.optimizer = optim.AdamW(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer,
-            mode='min',
-            factor=0.5,
-            patience=patience // 2,
-            verbose=True
+            self.optimizer, mode="min", factor=0.5, patience=patience // 2, verbose=True
         )
 
         # Training history
         self.history = {
-            'train_loss': [],
-            'val_loss': [],
-            'learning_rate': [],
-            'best_val_loss': float('inf'),
-            'epochs_without_improvement': 0
+            "train_loss": [],
+            "val_loss": [],
+            "learning_rate": [],
+            "best_val_loss": float("inf"),
+            "epochs_without_improvement": 0,
         }
 
-    def train_epoch(
-        self,
-        train_loader: DataLoader,
-        loss_fn: Callable,
-        is_graph: bool = False
-    ) -> float:
+    def train_epoch(self, train_loader: DataLoader, loss_fn: Callable, is_graph: bool = False) -> float:
         """
         Train for one epoch
 
@@ -110,7 +96,7 @@ class SelfLearningTrainer:
                 else:
                     batch = batch.to(self.device)
                     predictions = self.model(batch)
-                    targets = batch.y if hasattr(batch, 'y') else None
+                    targets = batch.y if hasattr(batch, "y") else None
 
             if targets is not None:
                 # Filter out missing values
@@ -126,12 +112,7 @@ class SelfLearningTrainer:
 
         return total_loss / max(num_batches, 1)
 
-    def validate(
-        self,
-        val_loader: DataLoader,
-        loss_fn: Callable,
-        is_graph: bool = False
-    ) -> float:
+    def validate(self, val_loader: DataLoader, loss_fn: Callable, is_graph: bool = False) -> float:
         """
         Validate the model
 
@@ -162,7 +143,7 @@ class SelfLearningTrainer:
                     else:
                         batch = batch.to(self.device)
                         predictions = self.model(batch)
-                        targets = batch.y if hasattr(batch, 'y') else None
+                        targets = batch.y if hasattr(batch, "y") else None
 
                 if targets is not None:
                     mask = targets != -1
@@ -178,9 +159,9 @@ class SelfLearningTrainer:
         train_loader: DataLoader,
         val_loader: DataLoader,
         num_epochs: int = 100,
-        loss_fn: Optional[Callable] = None,
-        is_graph: bool = False
-    ) -> Dict:
+        loss_fn: Callable | None = None,
+        is_graph: bool = False,
+    ) -> dict:
         """
         Train the model with early stopping
 
@@ -205,15 +186,15 @@ class SelfLearningTrainer:
 
             # Train
             train_loss = self.train_epoch(train_loader, loss_fn, is_graph)
-            self.history['train_loss'].append(train_loss)
+            self.history["train_loss"].append(train_loss)
 
             # Validate
             val_loss = self.validate(val_loader, loss_fn, is_graph)
-            self.history['val_loss'].append(val_loss)
+            self.history["val_loss"].append(val_loss)
 
             # Learning rate
-            current_lr = self.optimizer.param_groups[0]['lr']
-            self.history['learning_rate'].append(current_lr)
+            current_lr = self.optimizer.param_groups[0]["lr"]
+            self.history["learning_rate"].append(current_lr)
 
             print(f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | LR: {current_lr:.6f}")
 
@@ -221,31 +202,31 @@ class SelfLearningTrainer:
             self.scheduler.step(val_loss)
 
             # Early stopping check
-            if val_loss < self.history['best_val_loss']:
-                self.history['best_val_loss'] = val_loss
-                self.history['epochs_without_improvement'] = 0
-                self.save_checkpoint('best_model.pt')
+            if val_loss < self.history["best_val_loss"]:
+                self.history["best_val_loss"] = val_loss
+                self.history["epochs_without_improvement"] = 0
+                self.save_checkpoint("best_model.pt")
                 print(f"✓ New best model saved (val_loss: {val_loss:.4f})")
             else:
-                self.history['epochs_without_improvement'] += 1
+                self.history["epochs_without_improvement"] += 1
 
-            if self.history['epochs_without_improvement'] >= self.patience:
+            if self.history["epochs_without_improvement"] >= self.patience:
                 print(f"\nEarly stopping triggered after {epoch + 1} epochs")
                 break
 
         # Load best model
-        self.load_checkpoint('best_model.pt')
+        self.load_checkpoint("best_model.pt")
 
         return self.history
 
     def save_checkpoint(self, filename: str):
         """Save model checkpoint"""
         checkpoint = {
-            'model_state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'scheduler_state_dict': self.scheduler.state_dict(),
-            'history': self.history,
-            'timestamp': datetime.now().isoformat()
+            "model_state_dict": self.model.state_dict(),
+            "optimizer_state_dict": self.optimizer.state_dict(),
+            "scheduler_state_dict": self.scheduler.state_dict(),
+            "history": self.history,
+            "timestamp": datetime.now().isoformat(),
         }
 
         filepath = os.path.join(self.save_dir, filename)
@@ -256,10 +237,10 @@ class SelfLearningTrainer:
         filepath = os.path.join(self.save_dir, filename)
         if os.path.exists(filepath):
             checkpoint = torch.load(filepath, map_location=self.device)
-            self.model.load_state_dict(checkpoint['model_state_dict'])
-            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-            self.scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-            self.history = checkpoint.get('history', self.history)
+            self.model.load_state_dict(checkpoint["model_state_dict"])
+            self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
+            self.scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
+            self.history = checkpoint.get("history", self.history)
             print(f"Checkpoint loaded from {filepath}")
 
     def predict(self, data_loader: DataLoader, is_graph: bool = False) -> np.ndarray:
@@ -304,7 +285,7 @@ class ContinuousLearner:
         self,
         trainer: SelfLearningTrainer,
         data_collector,
-        retrain_threshold: int = 1000  # Number of new samples before retraining
+        retrain_threshold: int = 1000,  # Number of new samples before retraining
     ):
         """
         Args:

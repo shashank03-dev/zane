@@ -4,7 +4,7 @@ OpenMM-based MD simulations for ligand validation
 """
 
 import logging
-from typing import Dict, Optional, Tuple
+
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -16,10 +16,7 @@ class MolecularDynamicsSimulator:
     """
 
     def __init__(
-        self,
-        temperature: float = 300.0,  # Kelvin
-        pressure: float = 1.0,  # bar
-        timestep: float = 2.0  # femtoseconds
+        self, temperature: float = 300.0, pressure: float = 1.0, timestep: float = 2.0  # Kelvin  # bar  # femtoseconds
     ):
         """
         Args:
@@ -31,12 +28,7 @@ class MolecularDynamicsSimulator:
         self.pressure = pressure
         self.timestep = timestep
 
-    def simulate_ligand(
-        self,
-        smiles: str,
-        num_steps: int = 10000,
-        minimize: bool = True
-    ) -> Dict:
+    def simulate_ligand(self, smiles: str, num_steps: int = 10000, minimize: bool = True) -> dict:
         """
         Run MD simulation for a ligand in implicit solvent
 
@@ -56,27 +48,23 @@ class MolecularDynamicsSimulator:
 
             # Simulated results (replace with actual OpenMM simulation)
             results = {
-                'success': True,
-                'final_energy': np.random.uniform(-500, -200),  # kcal/mol
-                'rmsd': np.random.uniform(0.5, 2.0),  # Angstroms
-                'radius_of_gyration': np.random.uniform(5.0, 15.0),  # Angstroms
-                'num_steps': num_steps,
-                'temperature': self.temperature
+                "success": True,
+                "final_energy": np.random.uniform(-500, -200),  # kcal/mol
+                "rmsd": np.random.uniform(0.5, 2.0),  # Angstroms
+                "radius_of_gyration": np.random.uniform(5.0, 15.0),  # Angstroms
+                "num_steps": num_steps,
+                "temperature": self.temperature,
             }
 
             return results
 
         except Exception as e:
             logger.error(f"MD simulation error: {e}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     def simulate_protein_ligand_complex(
-        self,
-        protein_pdb: str,
-        ligand_smiles: str,
-        num_steps: int = 50000,
-        minimize: bool = True
-    ) -> Dict:
+        self, protein_pdb: str, ligand_smiles: str, num_steps: int = 50000, minimize: bool = True
+    ) -> dict:
         """
         Simulate protein-ligand complex
 
@@ -90,25 +78,25 @@ class MolecularDynamicsSimulator:
             Simulation results
         """
         try:
-            logger.info(f"Simulating protein-ligand complex")
+            logger.info("Simulating protein-ligand complex")
             logger.info(f"Steps: {num_steps}")
 
             # Placeholder for actual OpenMM implementation
             results = {
-                'success': True,
-                'binding_energy': np.random.uniform(-15, -5),  # kcal/mol
-                'ligand_rmsd': np.random.uniform(1.0, 3.0),  # Angstroms
-                'protein_rmsd': np.random.uniform(0.5, 2.0),  # Angstroms
-                'num_contacts': np.random.randint(5, 20),
-                'num_hbonds': np.random.randint(1, 6),
-                'stability': 'stable' if np.random.random() > 0.3 else 'unstable'
+                "success": True,
+                "binding_energy": np.random.uniform(-15, -5),  # kcal/mol
+                "ligand_rmsd": np.random.uniform(1.0, 3.0),  # Angstroms
+                "protein_rmsd": np.random.uniform(0.5, 2.0),  # Angstroms
+                "num_contacts": np.random.randint(5, 20),
+                "num_hbonds": np.random.randint(1, 6),
+                "stability": "stable" if np.random.random() > 0.3 else "unstable",
             }
 
             return results
 
         except Exception as e:
             logger.error(f"Complex simulation error: {e}")
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
 
 class EnergyCalculator:
@@ -116,14 +104,14 @@ class EnergyCalculator:
     Calculate molecular energies using various force fields
     """
 
-    def __init__(self, method: str = 'mmff94'):
+    def __init__(self, method: str = "mmff94"):
         """
         Args:
             method: Force field method ('mmff94', 'uff', etc.)
         """
         self.method = method
 
-    def calculate_energy(self, smiles: str) -> Optional[float]:
+    def calculate_energy(self, smiles: str) -> float | None:
         """
         Calculate molecular energy
 
@@ -146,11 +134,11 @@ class EnergyCalculator:
             if success == -1:
                 return None
 
-            if self.method.lower() == 'mmff94':
+            if self.method.lower() == "mmff94":
                 props = AllChem.MMFFGetMoleculeProperties(mol)
                 ff = AllChem.MMFFGetMoleculeForceField(mol, props)
                 energy = ff.CalcEnergy()
-            elif self.method.lower() == 'uff':
+            elif self.method.lower() == "uff":
                 ff = AllChem.UFFGetMoleculeForceField(mol)
                 energy = ff.CalcEnergy()
             else:
@@ -162,7 +150,7 @@ class EnergyCalculator:
             logger.error(f"Energy calculation error: {e}")
             return None
 
-    def optimize_geometry(self, smiles: str, max_iters: int = 200) -> Tuple[Optional[str], Optional[float]]:
+    def optimize_geometry(self, smiles: str, max_iters: int = 200) -> tuple[str | None, float | None]:
         """
         Optimize molecular geometry and return optimized SMILES and energy
 
@@ -186,12 +174,12 @@ class EnergyCalculator:
             if success == -1:
                 return None, None
 
-            if self.method.lower() == 'mmff94':
+            if self.method.lower() == "mmff94":
                 props = AllChem.MMFFGetMoleculeProperties(mol)
                 ff = AllChem.MMFFGetMoleculeForceField(mol, props)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()
-            elif self.method.lower() == 'uff':
+            elif self.method.lower() == "uff":
                 ff = AllChem.UFFGetMoleculeForceField(mol)
                 ff.Minimize(maxIts=max_iters)
                 energy = ff.CalcEnergy()

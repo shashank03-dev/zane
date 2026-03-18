@@ -2,13 +2,10 @@
 Tests for Models
 """
 
-import pytest
 import torch
-from torch_geometric.data import Data, Batch
-from drug_discovery.models import (
-    MolecularGNN, MolecularTransformer, MolecularMPNN,
-    EnsembleModel
-)
+from torch_geometric.data import Data
+
+from drug_discovery.models import EnsembleModel, MolecularGNN, MolecularTransformer
 
 
 class TestMolecularGNN:
@@ -16,24 +13,14 @@ class TestMolecularGNN:
 
     def test_model_creation(self):
         """Test model creation"""
-        model = MolecularGNN(
-            node_features=8,
-            edge_features=3,
-            hidden_dim=64,
-            num_layers=2
-        )
+        model = MolecularGNN(node_features=8, edge_features=3, hidden_dim=64, num_layers=2)
 
         assert model is not None
         assert isinstance(model, torch.nn.Module)
 
     def test_forward_pass(self):
         """Test forward pass"""
-        model = MolecularGNN(
-            node_features=8,
-            edge_features=3,
-            hidden_dim=64,
-            num_layers=2
-        )
+        model = MolecularGNN(node_features=8, edge_features=3, hidden_dim=64, num_layers=2)
 
         # Create dummy graph data
         x = torch.randn(10, 8)  # 10 nodes, 8 features
@@ -54,21 +41,13 @@ class TestMolecularTransformer:
 
     def test_model_creation(self):
         """Test model creation"""
-        model = MolecularTransformer(
-            input_dim=2048,
-            hidden_dim=256,
-            num_layers=3
-        )
+        model = MolecularTransformer(input_dim=2048, hidden_dim=256, num_layers=3)
 
         assert model is not None
 
     def test_forward_pass(self):
         """Test forward pass"""
-        model = MolecularTransformer(
-            input_dim=2048,
-            hidden_dim=256,
-            num_layers=3
-        )
+        model = MolecularTransformer(input_dim=2048, hidden_dim=256, num_layers=3)
 
         # Dummy fingerprint data
         x = torch.randn(4, 2048)  # Batch of 4 fingerprints

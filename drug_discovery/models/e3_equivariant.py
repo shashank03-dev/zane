@@ -3,12 +3,12 @@ E(3)-Equivariant Graph Neural Networks for 3D Molecular Modeling
 Implements rotation and translation equivariant architectures
 """
 
+import logging
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch_geometric.nn import MessagePassing, global_mean_pool
-from typing import Optional
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class E3EquivariantGNN(nn.Module):
         hidden_dim: int = 128,
         num_layers: int = 4,
         dropout: float = 0.1,
-        output_dim: int = 1
+        output_dim: int = 1,
     ):
         """
         Args:
@@ -52,14 +52,10 @@ class E3EquivariantGNN(nn.Module):
         # E(3)-equivariant layers
         self.conv_layers = nn.ModuleList()
         for _ in range(num_layers):
-            self.conv_layers.append(
-                E3EquivariantConv(hidden_dim, hidden_dim)
-            )
+            self.conv_layers.append(E3EquivariantConv(hidden_dim, hidden_dim))
 
         # Layer normalization
-        self.layer_norms = nn.ModuleList([
-            nn.LayerNorm(hidden_dim) for _ in range(num_layers)
-        ])
+        self.layer_norms = nn.ModuleList([nn.LayerNorm(hidden_dim) for _ in range(num_layers)])
 
         # Output MLP
         self.mlp = nn.Sequential(
@@ -69,7 +65,7 @@ class E3EquivariantGNN(nn.Module):
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
             nn.Dropout(dropout),
-            nn.Linear(hidden_dim // 2, output_dim)
+            nn.Linear(hidden_dim // 2, output_dim),
         )
 
     def forward(self, data):
@@ -86,8 +82,8 @@ class E3EquivariantGNN(nn.Module):
             data.x,
             data.edge_index,
             data.edge_attr,
-            data.pos if hasattr(data, 'pos') else None,
-            data.batch
+            data.pos if hasattr(data, "pos") else None,
+            data.batch,
         )
 
         # Encode features
@@ -121,7 +117,7 @@ class E3EquivariantConv(MessagePassing):
     """
 
     def __init__(self, in_channels: int, out_channels: int):
-        super().__init__(aggr='add')
+        super().__init__(aggr="add")
 
         self.in_channels = in_channels
         self.out_channels = out_channels
@@ -130,22 +126,16 @@ class E3EquivariantConv(MessagePassing):
         self.message_net = nn.Sequential(
             nn.Linear(2 * in_channels + 1, out_channels),  # +1 for distance
             nn.ReLU(),
-            nn.Linear(out_channels, out_channels)
+            nn.Linear(out_channels, out_channels),
         )
 
         # Update network
         self.update_net = nn.Sequential(
-            nn.Linear(in_channels + out_channels, out_channels),
-            nn.ReLU(),
-            nn.Linear(out_channels, out_channels)
+            nn.Linear(in_channels + out_channels, out_channels), nn.ReLU(), nn.Linear(out_channels, out_channels)
         )
 
     def forward(
-        self,
-        x: torch.Tensor,
-        edge_index: torch.Tensor,
-        edge_attr: torch.Tensor,
-        pos: Optional[torch.Tensor] = None
+        self, x: torch.Tensor, edge_index: torch.Tensor, edge_attr: torch.Tensor, pos: torch.Tensor | None = None
     ) -> torch.Tensor:
         """
         Forward pass
@@ -166,8 +156,8 @@ class E3EquivariantConv(MessagePassing):
         x_i: torch.Tensor,
         x_j: torch.Tensor,
         edge_attr: torch.Tensor,
-        pos_i: Optional[torch.Tensor] = None,
-        pos_j: Optional[torch.Tensor] = None
+        pos_i: torch.Tensor | None = None,
+        pos_j: torch.Tensor | None = None,
     ) -> torch.Tensor:
         """
         Construct messages
@@ -196,11 +186,7 @@ class E3EquivariantConv(MessagePassing):
 
         return message
 
-    def update(
-        self,
-        aggr_out: torch.Tensor,
-        x: torch.Tensor
-    ) -> torch.Tensor:
+    def update(self, aggr_out: torch.Tensor, x: torch.Tensor) -> torch.Tensor:
         """
         Update node features
 
@@ -227,7 +213,7 @@ class ProteinLigandCoDesignModel(nn.Module):
         protein_features: int = 20,
         hidden_dim: int = 256,
         num_layers: int = 6,
-        output_dim: int = 1
+        output_dim: int = 1,
     ):
         """
         Args:
@@ -241,24 +227,15 @@ class ProteinLigandCoDesignModel(nn.Module):
 
         # Separate encoders for ligand and protein
         self.ligand_encoder = E3EquivariantGNN(
-            node_features=ligand_features,
-            hidden_dim=hidden_dim,
-            num_layers=num_layers // 2,
-            output_dim=hidden_dim
+            node_features=ligand_features, hidden_dim=hidden_dim, num_layers=num_layers // 2, output_dim=hidden_dim
         )
 
         self.protein_encoder = E3EquivariantGNN(
-            node_features=protein_features,
-            hidden_dim=hidden_dim,
-            num_layers=num_layers // 2,
-            output_dim=hidden_dim
+            node_features=protein_features, hidden_dim=hidden_dim, num_layers=num_layers // 2, output_dim=hidden_dim
         )
 
         # Interaction layers
-        self.interaction_layers = nn.ModuleList([
-            nn.Linear(2 * hidden_dim, hidden_dim)
-            for _ in range(num_layers // 2)
-        ])
+        self.interaction_layers = nn.ModuleList([nn.Linear(2 * hidden_dim, hidden_dim) for _ in range(num_layers // 2)])
 
         # Output prediction
         self.output_mlp = nn.Sequential(
@@ -267,7 +244,7 @@ class ProteinLigandCoDesignModel(nn.Module):
             nn.Dropout(0.1),
             nn.Linear(hidden_dim, hidden_dim // 2),
             nn.ReLU(),
-            nn.Linear(hidden_dim // 2, output_dim)
+            nn.Linear(hidden_dim // 2, output_dim),
         )
 
     def forward(self, ligand_data, protein_data):

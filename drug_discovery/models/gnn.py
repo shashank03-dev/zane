@@ -5,9 +5,7 @@ Graph Neural Network Models for Molecular Property Prediction
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, GATConv, global_mean_pool, global_max_pool
-from torch_geometric.nn import MessagePassing
-from torch_geometric.utils import add_self_loops, degree
+from torch_geometric.nn import GATConv, MessagePassing, global_max_pool, global_mean_pool
 
 
 class MolecularGNN(nn.Module):
@@ -25,7 +23,7 @@ class MolecularGNN(nn.Module):
         num_heads: int = 4,
         dropout: float = 0.2,
         output_dim: int = 1,
-        pooling: str = 'mean'  # 'mean', 'max', or 'attention'
+        pooling: str = "mean",  # 'mean', 'max', or 'attention'
     ):
         """
         Args:
@@ -56,27 +54,19 @@ class MolecularGNN(nn.Module):
         for i in range(num_layers):
             if i == 0:
                 self.gat_layers.append(
-                    GATConv(hidden_dim, hidden_dim // num_heads, heads=num_heads,
-                           dropout=dropout, edge_dim=hidden_dim)
+                    GATConv(hidden_dim, hidden_dim // num_heads, heads=num_heads, dropout=dropout, edge_dim=hidden_dim)
                 )
             else:
                 self.gat_layers.append(
-                    GATConv(hidden_dim, hidden_dim // num_heads, heads=num_heads,
-                           dropout=dropout, edge_dim=hidden_dim)
+                    GATConv(hidden_dim, hidden_dim // num_heads, heads=num_heads, dropout=dropout, edge_dim=hidden_dim)
                 )
 
         # Batch normalization layers
-        self.batch_norms = nn.ModuleList([
-            nn.BatchNorm1d(hidden_dim) for _ in range(num_layers)
-        ])
+        self.batch_norms = nn.ModuleList([nn.BatchNorm1d(hidden_dim) for _ in range(num_layers)])
 
         # Attention pooling
-        if pooling == 'attention':
-            self.attention_pool = nn.Sequential(
-                nn.Linear(hidden_dim, hidden_dim),
-                nn.Tanh(),
-                nn.Linear(hidden_dim, 1)
-            )
+        if pooling == "attention":
+            self.attention_pool = nn.Sequential(nn.Linear(hidden_dim, hidden_dim), nn.Tanh(), nn.Linear(hidden_dim, 1))
 
         # Output layers
         self.fc1 = nn.Linear(hidden_dim, hidden_dim)
@@ -115,11 +105,11 @@ class MolecularGNN(nn.Module):
                 x = x_new
 
         # Graph pooling
-        if self.pooling == 'mean':
+        if self.pooling == "mean":
             x = global_mean_pool(x, batch)
-        elif self.pooling == 'max':
+        elif self.pooling == "max":
             x = global_max_pool(x, batch)
-        elif self.pooling == 'attention':
+        elif self.pooling == "attention":
             # Attention-based pooling
             attention_weights = self.attention_pool(x)
             attention_weights = torch.softmax(attention_weights, dim=0)
@@ -141,21 +131,15 @@ class MPNNLayer(MessagePassing):
     """
 
     def __init__(self, node_dim, edge_dim):
-        super().__init__(aggr='add')
+        super().__init__(aggr="add")
         self.node_dim = node_dim
         self.edge_dim = edge_dim
 
         self.message_net = nn.Sequential(
-            nn.Linear(2 * node_dim + edge_dim, node_dim),
-            nn.ReLU(),
-            nn.Linear(node_dim, node_dim)
+            nn.Linear(2 * node_dim + edge_dim, node_dim), nn.ReLU(), nn.Linear(node_dim, node_dim)
         )
 
-        self.update_net = nn.Sequential(
-            nn.Linear(2 * node_dim, node_dim),
-            nn.ReLU(),
-            nn.Linear(node_dim, node_dim)
-        )
+        self.update_net = nn.Sequential(nn.Linear(2 * node_dim, node_dim), nn.ReLU(), nn.Linear(node_dim, node_dim))
 
     def forward(self, x, edge_index, edge_attr):
         return self.propagate(edge_index, x=x, edge_attr=edge_attr)
@@ -182,20 +166,16 @@ class MolecularMPNN(nn.Module):
         hidden_dim: int = 128,
         num_layers: int = 4,
         dropout: float = 0.2,
-        output_dim: int = 1
+        output_dim: int = 1,
     ):
         super().__init__()
 
         self.node_encoder = nn.Linear(node_features, hidden_dim)
         self.edge_encoder = nn.Linear(edge_features, hidden_dim)
 
-        self.mpnn_layers = nn.ModuleList([
-            MPNNLayer(hidden_dim, hidden_dim) for _ in range(num_layers)
-        ])
+        self.mpnn_layers = nn.ModuleList([MPNNLayer(hidden_dim, hidden_dim) for _ in range(num_layers)])
 
-        self.batch_norms = nn.ModuleList([
-            nn.BatchNorm1d(hidden_dim) for _ in range(num_layers)
-        ])
+        self.batch_norms = nn.ModuleList([nn.BatchNorm1d(hidden_dim) for _ in range(num_layers)])
 
         self.fc1 = nn.Linear(hidden_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, output_dim)

@@ -2,10 +2,10 @@
 Utility Functions for Drug Discovery
 """
 
-import torch
-import numpy as np
 import random
-from typing import Optional
+
+import numpy as np
+import torch
 
 
 def set_seed(seed: int = 42):
@@ -36,8 +36,8 @@ def get_device(prefer_cuda: bool = True) -> str:
         Device string ('cuda' or 'cpu')
     """
     if prefer_cuda and torch.cuda.is_available():
-        return 'cuda'
-    return 'cpu'
+        return "cuda"
+    return "cpu"
 
 
 def count_parameters(model: torch.nn.Module) -> int:

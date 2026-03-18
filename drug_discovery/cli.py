@@ -6,6 +6,7 @@ import argparse
 import sys
 
 from drug_discovery import DrugDiscoveryPipeline
+from drug_discovery.dashboard import run_dashboard
 from drug_discovery.evaluation import ADMETPredictor
 
 
@@ -36,6 +37,12 @@ def main():
     collect_parser.add_argument("--sources", nargs="+", default=["pubchem", "chembl"])
     collect_parser.add_argument("--limit", type=int, default=1000)
 
+    # Dashboard command
+    dashboard_parser = subparsers.add_parser("dashboard", help="Show professional ZANE terminal dashboard")
+    dashboard_parser.add_argument("--static", action="store_true", help="Render one static dashboard frame")
+    dashboard_parser.add_argument("--refresh", type=float, default=1.0, help="Live refresh interval in seconds")
+    dashboard_parser.add_argument("--iterations", type=int, default=30, help="Number of live refresh cycles")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -46,6 +53,8 @@ def main():
         train_model(args)
     elif args.command == "collect":
         collect_data(args)
+    elif args.command == "dashboard":
+        show_dashboard(args)
     else:
         parser.print_help()
 
@@ -134,6 +143,11 @@ def collect_data(args):
     # Save
     data.to_csv("./data/collected_data.csv", index=False)
     print("Saved to ./data/collected_data.csv")
+
+
+def show_dashboard(args):
+    """Display ZANE terminal dashboard."""
+    run_dashboard(live=not args.static, refresh_seconds=args.refresh, iterations=args.iterations)
 
 
 if __name__ == "__main__":

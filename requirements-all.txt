@@ -1,0 +1,38 @@
+# ZANE comprehensive dependency set
+# Installs core dependencies plus optional extras used across advanced workflows.
+#
+# Usage:
+#   pip install -r requirements-all.txt
+#
+# Notes:
+# - This file is intentionally broad and may install heavy packages.
+# - Use requirements.txt for a leaner baseline install.
+
+-r requirements.txt
+
+# Terminal dashboard runtime
+rich>=13.7.0
+
+# Notebook and interactive experimentation
+jupyterlab>=4.2.0
+notebook>=7.2.0
+ipykernel>=6.29.0
+ipywidgets>=8.1.0
+
+# Advanced model serving and API integration
+fastapi>=0.111.0
+uvicorn>=0.30.0
+pydantic>=2.7.0
+
+# Additional data and experiment tooling
+datasets>=2.19.0
+evaluate>=0.4.2
+tensorboard>=2.16.0
+
+# Optional explainability and analysis
+shap>=0.45.0
+umap-learn>=0.5.6
+
+# Development workflow extras
+pre-commit>=3.7.0
+isort>=5.13.0

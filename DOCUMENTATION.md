@@ -407,9 +407,22 @@ Dashboard views emphasize operational context:
 - KPI panel
 - training monitor
 - candidate queue
+- AI copilot recommendations panel
 - system alerts
 
-### 12.1 Dashboard Layout Diagram
+### 12.1 AI-Enabled Dashboard Commands
+
+```bash
+python -m drug_discovery.cli dashboard --static --with-ai
+python -m drug_discovery.cli dashboard --with-ai --ai-model-id artifacts/llama/tinyllama-1.1b-chat --ai-refresh-every 3
+```
+
+Behavior notes:
+
+- if local AI model loading fails, the dashboard falls back to heuristic recommendations
+- AI refresh cadence is controlled by `--ai-refresh-every`
+
+### 12.2 Dashboard Layout Diagram
 
 ```mermaid
 flowchart LR
@@ -548,6 +561,24 @@ Required guidance:
 - pin critical dependencies via requirements files
 - use separate environments for CI and heavy local experiments
 - store credentials in environment variables, not source code
+
+### 21.1 Workspace Categorization Setup
+
+Create the standard folders for data, checkpoints, logs, and outputs:
+
+```bash
+make setup-workspace
+```
+
+Create virtual environment and install project dependencies:
+
+```bash
+make setup-venv
+```
+
+Environment template file:
+
+- `.env.example`
 
 ## 22. Extension Patterns and Plugin Concepts
 
@@ -702,3 +733,4 @@ drug_discovery/
 ## 26. License
 
 CC0 1.0 Universal
+

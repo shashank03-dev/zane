@@ -8,13 +8,14 @@ __author__ = "AI Drug Discovery Team"
 
 from .ai_support import LlamaSupportAssistant
 from .data import DataCollector, MolecularDataset
-from .models import MolecularGNN, MolecularTransformer
+from .models import DrugModeler, MolecularGNN, MolecularTransformer
 from .pipeline import DrugDiscoveryPipeline
 
 __all__ = [
     "DrugDiscoveryPipeline",
     "MolecularGNN",
     "MolecularTransformer",
+    "DrugModeler",
     "DataCollector",
     "MolecularDataset",
     "LlamaSupportAssistant",

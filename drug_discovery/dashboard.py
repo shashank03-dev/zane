@@ -6,6 +6,7 @@ import random
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 
 from rich import box
 from rich.align import Align
@@ -36,6 +37,83 @@ class DashboardSnapshot:
     train_loss: float
     val_loss: float
     latency_ms: float
+
+
+class DashboardAIAdvisor:
+    """Provide dashboard guidance via local LLM when available, with safe heuristic fallback."""
+
+    def __init__(self, model_id: str | None = None, max_new_tokens: int = 120):
+        self.model_id = model_id
+        self.max_new_tokens = max_new_tokens
+        self._assistant: Any | None = None
+        self._provider = "heuristic"
+
+        if model_id:
+            try:
+                from drug_discovery.ai_support import AISupportConfig, LlamaSupportAssistant
+
+                self._assistant = LlamaSupportAssistant(config=AISupportConfig(model_id=model_id))
+                self._provider = f"llama:{model_id}"
+            except Exception:
+                self._assistant = None
+                self._provider = "heuristic"
+
+    @property
+    def provider(self) -> str:
+        return self._provider
+
+    def summarize(self, snapshot: DashboardSnapshot) -> str:
+        heuristic = _heuristic_insights(snapshot)
+
+        if self._assistant is None:
+            return heuristic
+
+        prompt = (
+            "Provide exactly 3 concise operational recommendations for this drug discovery run. "
+            "Focus on training quality, candidate triage, and throughput."
+        )
+        context = (
+            f"model={snapshot.model_type}; mode={snapshot.mode}; "
+            f"hit_rate={snapshot.hit_rate:.3f}; avg_qed={snapshot.avg_qed:.3f}; avg_sa={snapshot.avg_sa:.3f}; "
+            f"best_binding={snapshot.best_binding:.2f}; train_loss={snapshot.train_loss:.4f}; "
+            f"val_loss={snapshot.val_loss:.4f}; latency_ms={snapshot.latency_ms:.1f}; "
+            f"active_jobs={snapshot.active_jobs}; epoch={snapshot.epoch}/{snapshot.total_epochs}"
+        )
+
+        try:
+            response = self._assistant.respond(
+                user_prompt=prompt,
+                context=context,
+                max_new_tokens=self.max_new_tokens,
+                temperature=0.2,
+                top_p=0.9,
+            )
+            cleaned = "\n".join(line.strip() for line in response.splitlines() if line.strip())
+            return cleaned or heuristic
+        except Exception:
+            self._provider = "heuristic"
+            return heuristic
+
+
+def _heuristic_insights(snapshot: DashboardSnapshot) -> str:
+    notes: list[str] = []
+
+    if snapshot.val_loss > snapshot.train_loss * 1.2:
+        notes.append("- Validation drift detected. Reduce learning rate and enable early stopping checks.")
+    else:
+        notes.append("- Training trend is stable. Continue current schedule and monitor loss spread.")
+
+    if snapshot.hit_rate < 0.15:
+        notes.append("- Hit rate is below target. Tighten candidate filters toward higher QED and lower SA.")
+    else:
+        notes.append("- Hit rate is healthy. Expand exploration around top-ranked chemical neighborhoods.")
+
+    if snapshot.latency_ms > 120:
+        notes.append("- Inference latency is high. Batch scoring and reduce synchronous dashboard polling.")
+    else:
+        notes.append("- Latency is within operational band. Current serving setup is acceptable.")
+
+    return "\n".join(notes)
 
 
 def _build_header(snapshot: DashboardSnapshot) -> Panel:
@@ -127,7 +205,14 @@ def _build_alerts_panel(snapshot: DashboardSnapshot) -> Panel:
     return Panel(text, title="System Alerts", border_style="blue", box=box.ROUNDED)
 
 
-def render_dashboard(snapshot: DashboardSnapshot) -> Layout:
+def _build_ai_panel(ai_text: str, provider: str) -> Panel:
+    body = Text()
+    body.append(f"Provider: {provider}\n\n", style="dim")
+    body.append(ai_text, style="white")
+    return Panel(body, title="AI Copilot", border_style="bright_cyan", box=box.ROUNDED)
+
+
+def render_dashboard(snapshot: DashboardSnapshot, ai_text: str = "AI insights disabled.", ai_provider: str = "off") -> Layout:
     """Build a complete terminal dashboard layout for the given snapshot."""
     layout = Layout()
     layout.split_column(
@@ -140,10 +225,12 @@ def render_dashboard(snapshot: DashboardSnapshot) -> Layout:
 
     layout["main"].split_row(Layout(name="left"), Layout(name="right"))
     layout["left"].split_column(Layout(name="kpis"), Layout(name="train"))
+    layout["right"].split_column(Layout(name="candidates"), Layout(name="ai"))
 
     layout["left"]["kpis"].update(_build_kpi_table(snapshot))
     layout["left"]["train"].update(_build_training_panel(snapshot))
-    layout["right"].update(_build_candidates_table())
+    layout["right"]["candidates"].update(_build_candidates_table())
+    layout["right"]["ai"].update(_build_ai_panel(ai_text=ai_text, provider=ai_provider))
 
     layout["footer"].update(_build_alerts_panel(snapshot))
     return layout
@@ -181,7 +268,14 @@ def _next_snapshot(previous: DashboardSnapshot) -> DashboardSnapshot:
     )
 
 
-def run_dashboard(live: bool = True, refresh_seconds: float = 1.0, iterations: int = 30) -> None:
+def run_dashboard(
+    live: bool = True,
+    refresh_seconds: float = 1.0,
+    iterations: int = 30,
+    enable_ai: bool = False,
+    ai_model_id: str | None = None,
+    ai_refresh_every: int = 5,
+) -> None:
     """Run the ZANE terminal dashboard in static or live mode."""
     console = Console()
 
@@ -203,15 +297,27 @@ def run_dashboard(live: bool = True, refresh_seconds: float = 1.0, iterations: i
         latency_ms=61.5,
     )
 
+    advisor = DashboardAIAdvisor(model_id=ai_model_id) if enable_ai else None
+    ai_text = advisor.summarize(snapshot) if advisor else "AI insights disabled. Use --with-ai to enable."
+    ai_provider = advisor.provider if advisor else "off"
+
     if not live:
-        console.print(render_dashboard(snapshot))
+        console.print(render_dashboard(snapshot, ai_text=ai_text, ai_provider=ai_provider))
         return
 
-    with Live(render_dashboard(snapshot), refresh_per_second=8, console=console, screen=True) as live_view:
+    with Live(
+        render_dashboard(snapshot, ai_text=ai_text, ai_provider=ai_provider),
+        refresh_per_second=8,
+        console=console,
+        screen=True,
+    ) as live_view:
         for _ in range(max(iterations, 1)):
             time.sleep(max(refresh_seconds, 0.2))
             snapshot = _next_snapshot(snapshot)
-            live_view.update(render_dashboard(snapshot))
+            if advisor and snapshot.epoch % max(1, ai_refresh_every) == 0:
+                ai_text = advisor.summarize(snapshot)
+                ai_provider = advisor.provider
+            live_view.update(render_dashboard(snapshot, ai_text=ai_text, ai_provider=ai_provider))
 
 
 if __name__ == "__main__":

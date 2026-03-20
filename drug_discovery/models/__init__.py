@@ -5,11 +5,14 @@ Models Module
 from .e3_equivariant import E3EquivariantGNN, ProteinLigandCoDesignModel
 from .ensemble import EnsembleModel, HybridModel, MultiTaskModel
 from .gnn import MolecularGNN, MolecularMPNN
+from .drug_modeling import DrugModeler, DrugModelingResult
 from .transformer import MolecularTransformer, SMILESTransformer
 
 __all__ = [
     "MolecularGNN",
     "MolecularMPNN",
+    "DrugModeler",
+    "DrugModelingResult",
     "MolecularTransformer",
     "SMILESTransformer",
     "EnsembleModel",

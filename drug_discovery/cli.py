@@ -45,6 +45,18 @@ def main():
     dashboard_parser.add_argument("--static", action="store_true", help="Render one static dashboard frame")
     dashboard_parser.add_argument("--refresh", type=float, default=1.0, help="Live refresh interval in seconds")
     dashboard_parser.add_argument("--iterations", type=int, default=30, help="Number of live refresh cycles")
+    dashboard_parser.add_argument("--with-ai", action="store_true", help="Enable AI copilot insights panel")
+    dashboard_parser.add_argument(
+        "--ai-model-id",
+        default="artifacts/llama/tinyllama-1.1b-chat",
+        help="Local or remote model id/path for dashboard AI suggestions",
+    )
+    dashboard_parser.add_argument(
+        "--ai-refresh-every",
+        type=int,
+        default=5,
+        help="Refresh AI recommendations every N epochs",
+    )
 
     # AI support command (Meta Llama)
     support_parser = subparsers.add_parser("assist", help="Use Meta Llama for AI support")
@@ -180,7 +192,14 @@ def collect_data(args):
 
 def show_dashboard(args):
     """Display ZANE terminal dashboard."""
-    run_dashboard(live=not args.static, refresh_seconds=args.refresh, iterations=args.iterations)
+    run_dashboard(
+        live=not args.static,
+        refresh_seconds=args.refresh,
+        iterations=args.iterations,
+        enable_ai=args.with_ai,
+        ai_model_id=args.ai_model_id,
+        ai_refresh_every=args.ai_refresh_every,
+    )
 
 
 def run_ai_support(args):

@@ -95,7 +95,7 @@ class FeatureStore:
 
         try:
             with open(feature_path, "rb") as f:
-                data = pickle.dump(f)
+                data = pickle.load(f)
                 self._cache[cache_key] = data
                 return data["embedding"]
         except Exception as e:

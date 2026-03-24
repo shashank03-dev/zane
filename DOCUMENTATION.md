@@ -454,6 +454,8 @@ Optimization modules support candidate ranking under trade-offs such as:
 
 ## 12. Dashboard Operations and Monitoring
 
+![ZANE terminal dashboard screenshot](docs/assets/dashboard-screenshot.svg)
+
 Dashboard views emphasize operational context:
 
 - run identifiers and model mode
@@ -463,7 +465,93 @@ Dashboard views emphasize operational context:
 - AI copilot recommendations panel
 - system alerts
 
-### 12.1 AI-Enabled Dashboard Commands
+### 12.1 Dashboard Feature Screenshot Gallery
+
+The following screenshots cover the dashboard's main feature set, uses, and functions.
+
+#### 12.1.1 Default Simple View
+
+![Dashboard default overview](docs/assets/dashboard/01-overview-lab.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static
+```
+
+#### 12.1.2 Combination Ranking Function
+
+![Dashboard combinations panel](docs/assets/dashboard/02-combinations.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels combinations
+```
+
+#### 12.1.3 Composition Function (Beta Simulation)
+
+![Dashboard composition panel](docs/assets/dashboard/03-composition.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels composition
+```
+
+#### 12.1.4 Analytics and Telemetry Function
+
+![Dashboard analytics panel](docs/assets/dashboard/04-analytics.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels analytics
+```
+
+#### 12.1.5 AI Copilot Function
+
+![Dashboard AI copilot panel](docs/assets/dashboard/05-ai-copilot.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels ai --with-ai
+```
+
+#### 12.1.6 Complete Function Set (All Detail Panels)
+
+![Dashboard all panels](docs/assets/dashboard/06-all-panels.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels all --with-ai
+```
+
+#### 12.1.7 Custom Compound Generation Function
+
+![Dashboard custom compounds](docs/assets/dashboard/07-custom-compounds.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels all \
+    --custom-characteristics "consumable hydrocarbon high performance low side effects" \
+    --custom-count 6
+```
+
+#### 12.1.8 No Simulated Combination Mode
+
+![Dashboard no simulated combos](docs/assets/dashboard/08-no-sim-combos.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels combinations composition analytics --no-sim-combos
+```
+
+#### 12.1.9 Theme Function: Neon
+
+![Dashboard neon theme](docs/assets/dashboard/09-theme-neon.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels all --theme neon
+```
+
+#### 12.1.10 Theme Function: Classic
+
+![Dashboard classic theme](docs/assets/dashboard/10-theme-classic.svg)
+
+```bash
+python -m drug_discovery.cli dashboard --static --detail-panels all --theme classic
+```
+
+### 12.2 AI-Enabled Dashboard Commands
 
 ```bash
 python -m drug_discovery.cli dashboard --static --with-ai
@@ -475,7 +563,7 @@ Behavior notes:
 - if local AI model loading fails, the dashboard falls back to heuristic recommendations
 - AI refresh cadence is controlled by `--ai-refresh-every`
 
-### 12.2 Dashboard Layout Diagram
+### 12.3 Dashboard Layout Diagram
 
 ```mermaid
 flowchart LR

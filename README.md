@@ -285,6 +285,8 @@ python -m drug_discovery.cli collect --sources pubchem chembl --limit 500
 
 ### Dashboard (Static)
 
+![ZANE terminal dashboard screenshot](docs/assets/dashboard-screenshot.svg)
+
 ```bash
 python -m drug_discovery.cli dashboard --static
 ```
@@ -319,6 +321,90 @@ zane dashboard --static --detail-panels all
 
 # Show with custom compounds
 zane dashboard --static --custom-characteristics "consumable hydrocarbon" --custom-count 4
+```
+
+### Dashboard Feature and Function Screenshot Gallery
+
+#### 1. Default Simple Overview
+
+![Dashboard default overview](docs/assets/dashboard/01-overview-lab.svg)
+
+```bash
+zane dashboard --static
+```
+
+#### 2. Simulated Combination Ranking Panel
+
+![Dashboard combinations panel](docs/assets/dashboard/02-combinations.svg)
+
+```bash
+zane dashboard --static --detail-panels combinations
+```
+
+#### 3. Composition / Beta Testing Panel
+
+![Dashboard composition panel](docs/assets/dashboard/03-composition.svg)
+
+```bash
+zane dashboard --static --detail-panels composition
+```
+
+#### 4. Analytics and Runtime Telemetry
+
+![Dashboard analytics panel](docs/assets/dashboard/04-analytics.svg)
+
+```bash
+zane dashboard --static --detail-panels analytics
+```
+
+#### 5. AI Copilot Panel
+
+![Dashboard AI copilot panel](docs/assets/dashboard/05-ai-copilot.svg)
+
+```bash
+zane dashboard --static --detail-panels ai --with-ai
+```
+
+#### 6. Full Dashboard Function Set (All Panels)
+
+![Dashboard all panels](docs/assets/dashboard/06-all-panels.svg)
+
+```bash
+zane dashboard --static --detail-panels all --with-ai
+```
+
+#### 7. Custom Compound Generation Function
+
+![Dashboard custom compounds](docs/assets/dashboard/07-custom-compounds.svg)
+
+```bash
+zane dashboard --static --detail-panels all \
+  --custom-characteristics "consumable hydrocarbon high performance low side effects" \
+  --custom-count 6
+```
+
+#### 8. No-Simulated-Combinations Mode
+
+![Dashboard no simulated combos](docs/assets/dashboard/08-no-sim-combos.svg)
+
+```bash
+zane dashboard --static --detail-panels combinations composition analytics --no-sim-combos
+```
+
+#### 9. Neon Theme
+
+![Dashboard neon theme](docs/assets/dashboard/09-theme-neon.svg)
+
+```bash
+zane dashboard --static --detail-panels all --theme neon
+```
+
+#### 10. Classic Theme
+
+![Dashboard classic theme](docs/assets/dashboard/10-theme-classic.svg)
+
+```bash
+zane dashboard --static --detail-panels all --theme classic
 ```
 
 ### Dashboard (Live)

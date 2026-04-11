@@ -1,4 +1,12 @@
-# ZANE:  AI-native Drug Discovery Module - experimental version beta
+# ZANE: AI-native Drug Discovery Module - experimental version beta
+
+<p align="center">
+  <img src="logo.png" alt="ZANE logo" width="220" />
+</p>
+
+<p align="center">
+  <img src="zane%20(1).png" alt="ZANE cover image" width="900" />
+</p>
 
 A production-minded, research-first platform for molecular intelligence workflows, from data acquisition and model training to simulation-aware candidate prioritization and AI-assisted decision support.
 
@@ -29,19 +37,20 @@ The repository is intended for scientific teams that need a repeatable, extensib
 
 1. Platform Scope
 2. Key Capabilities
-3. Architecture
-4. Repository Layout
-5. Installation
-6. Quick Start
-7. Operations Guide
-8. AI Support (Meta Llama)
-9. Dashboard Operations
-10. Workflow Blueprints
-11. Quality and CI/CD
-12. Security and Responsible Use
-13. Troubleshooting
-14. Contribution Standards
-15. License
+3. 2026 Upgrade Highlights
+4. Architecture
+5. Repository Layout
+6. Installation
+7. Quick Start
+8. Operations Guide
+9. AI Support (Meta Llama)
+10. Dashboard Operations
+11. Workflow Blueprints
+12. Quality and CI/CD
+13. Security and Responsible Use
+14. Troubleshooting
+15. Contribution Standards
+16. License
 
 ## 1. Platform Scope
 
@@ -93,7 +102,101 @@ ZANE is designed to support the full loop of computational triage:
 - Query-driven ranking and filtering
 - Web/PDF evidence collection and Cerebras API integration
 
-## 3. Architecture
+## 3. 2026 Upgrade Highlights
+
+This release adds deep external-ecosystem interoperability and upgrades simulation/research execution paths.
+
+### 3.1 External Ecosystem Integration Layer
+
+- Added centralized integration registry in `drug_discovery/integrations.py`.
+- Added external tooling bridge in `drug_discovery/external_tooling.py`.
+- Added runtime status introspection command:
+
+```bash
+python -m drug_discovery.cli integrations
+```
+
+This command reports:
+
+- Submodule registration status
+- Local checkout presence
+- Python import availability
+- Effective integration availability
+
+### 3.2 Integrated Repositories
+
+Tracked under `external/` as submodules:
+
+- AiZynthFinder (retrosynthesis core)
+- REINVENT4 (RL molecule generation)
+- GT4SD molecular-design (multi-model generation pipeline)
+- GT4SD core framework (property/scoring/generation ecosystem)
+- RDKit (core cheminformatics toolkit)
+- IBM Molformer (transformer chemistry models)
+- MOSES (molecule quality benchmarking)
+- GuacaMol (drug design benchmark tasks)
+
+### 3.3 Backend and Runtime Upgrade Coverage
+
+- `drug_discovery/synthesis/backends.py`
+  - AiZynthFinder backend now uses centralized integration detection.
+  - Better diagnostics for missing config/dependency states.
+
+- `drug_discovery/generation/backends.py`
+  - Added `molecular-design` backend.
+  - Added seed-SMILES canonicalization using REINVENT conversion utilities when available.
+  - Added richer metadata for backend attempts and pipeline script visibility.
+
+- `drug_discovery/benchmarking/backends.py`
+  - MOSES and GuacaMol wrappers now use centralized integration availability checks.
+
+- `drug_discovery/testing/drug_combinations.py`
+  - Combination features now leverage external tooling:
+    - REINVENT canonicalization bridge
+    - GT4SD property predictors (when available)
+  - Fingerprint similarity uses robust RDKit Tanimoto API.
+
+- `drug_discovery/simulation/biological_response.py`
+  - ADME/simulation paths now use canonicalized SMILES and GT4SD property predictors when available.
+  - Fully preserves fallback behavior when optional dependencies are unavailable.
+
+### 3.4 CLI and UX Upgrades
+
+- Added `integrations` command for operational visibility.
+- Extended generation backend defaults to include `molecular-design`.
+- Improved CLI import behavior so non-dashboard commands do not require dashboard-only dependencies.
+
+### 3.5 Packaging and Dependency Upgrades
+
+- Added `integrations` extra in `setup.py` for optional ecosystem packages.
+
+Example:
+
+```bash
+pip install -e .[integrations]
+```
+
+### 3.6 Suggested Validation Workflow
+
+Run these commands after setup to validate upgraded features:
+
+```bash
+# 1) Inspect optional integration status
+python -m drug_discovery.cli integrations
+
+# 2) Verify generation backend routing
+python -m drug_discovery.cli generate --prompt "kinase inhibitor" --num 5 \
+  --backends reinvent4 gt4sd molecular-design molformer
+
+# 3) Run benchmark wrappers (if deps available)
+python -m drug_discovery.cli benchmark --suite guacamol
+python -m drug_discovery.cli benchmark --suite moses
+
+# 4) Run retrosynthesis research flow
+python -m drug_discovery.cli synthesis-research "CCO" --max-results 3
+```
+
+## 4. Architecture
 
 ZANE follows a layered architecture for maintainability and extension safety:
 
@@ -113,7 +216,7 @@ ZANE follows a layered architecture for maintainability and extension safety:
 5. Score and rank candidate molecules.
 6. Monitor via dashboard and export artifacts.
 
-## 4. Repository Layout
+## 5. Repository Layout
 
 Primary modules:
 
@@ -131,7 +234,7 @@ Primary modules:
 - drug_discovery/dashboard.py: terminal dashboard implementation
 - drug_discovery/ai_support.py: Meta Llama integration
 
-## 5. Installation
+## 6. Installation
 
 ### Fast Clone Bootstrap (Auto Installs + Opens Dashboard)
 
@@ -242,7 +345,7 @@ Run generation with explicit backend order (including molecular-design):
 python -m drug_discovery.cli generate --prompt "kinase inhibitor" --backends reinvent4 gt4sd molecular-design molformer
 ```
 
-## 6. Quick Start
+## 7. Quick Start
 
 ### Train a Baseline Model
 
@@ -264,9 +367,9 @@ python -m drug_discovery.cli predict "CC(=O)OC1=CC=CC=C1C(=O)O" \
 python -m drug_discovery.cli admet "CC(=O)OC1=CC=CC=C1C(=O)O"
 ```
 
-## 7. Operations Guide
+## 8. Operations Guide
 
-## 16. Scientific Revision Log (2026-03-23)
+### Scientific Revision Log (2026-03-23)
 
 The following protocol upgrades were applied and validated:
 
@@ -473,7 +576,7 @@ python -m drug_discovery.cli synthesis-research "CCO" --no-internet --no-ai
 - Use consistent splits for model-to-model comparisons.
 - Persist run outputs under dedicated artifact directories.
 
-## 8. AI Support (Meta Llama)
+## 9. AI Support (Meta Llama)
 
 ### Basic Command
 
@@ -498,7 +601,7 @@ python -m drug_discovery.cli assist "Draft next assay plan" \
 - Ensure model access is approved in your Hugging Face account.
 - Provide an auth token in environment variables (for example, HF_TOKEN).
 
-## 9. Dashboard Operations
+## 10. Dashboard Operations
 
 The terminal dashboard is optimized for operator awareness during active runs. It features a professional ZANE ASCII banner and operates in **simple-by-default mode** for clean, focused viewing.
 
@@ -595,7 +698,7 @@ Generated compounds appear in rankings as `KB721H66-<FOCUS>-<N>` and are include
 - **Detail Panels** (on-demand): Combinations, composition, analytics, AI copilot
 - **Alerts and Status**: Operational health, anomaly warnings
 
-## 10. Workflow Blueprints
+## 11. Workflow Blueprints
 
 ### Baseline Discovery Workflow
 
@@ -633,7 +736,7 @@ zane boltzgen path/to/design.yaml \
 
 The CLI delegates to the official BoltzGen pipeline, reuses cached downloads when available, and returns a JSON summary of the top-ranked designs. Use `--steps` to run only parts of the pipeline or `--devices` to set accelerator counts.
 
-## 11. Quality and CI/CD
+## 12. Quality and CI/CD
 
 Recommended pre-push checks:
 
@@ -649,7 +752,7 @@ Expected quality posture:
 - Lint and format checks should be clean.
 - User-facing behavior changes should be documented.
 
-## 12. Security and Responsible Use
+## 13. Security and Responsible Use
 
 This repository is intended for research and decision support.
 
@@ -658,7 +761,7 @@ This repository is intended for research and decision support.
 - Apply governance and provenance controls for data and results.
 - Ensure expert review before any high-impact downstream use.
 
-## 13. Dashboard Flags Reference (Comprehensive)
+## 14. Dashboard Flags Reference (Comprehensive)
 
 ### Core Dashboard Flags
 
@@ -723,7 +826,7 @@ zane dashboard --refresh 1.0 --iterations 60 \
   --detail-panels analytics ai
 ```
 
-## 14. Recent Feature Updates (Session Summary)
+## 15. Recent Feature Updates (Session Summary)
 
 ### Dashboard Visual Enhancements
 - **Professional ZANE Banner**: 7-line ASCII art header with KB721H66 branding
@@ -753,7 +856,7 @@ zane dashboard --refresh 1.0 --iterations 60 \
 - **Local AI Copilot**: Reasoning and recommendations from LLM
 - **Continuous Intel Refresh**: `--intel-refresh-every` controls update cadence
 
-## 15. Troubleshooting
+## 16. Troubleshooting
 
 ### Llama Model Fails to Load
 
@@ -779,7 +882,7 @@ Actions:
 - Reinstall dependencies
 - Re-run with explicit model/checkpoint arguments
 
-## 14. Contribution Standards
+## 17. Contribution Standards
 
 Recommended development flow:
 
@@ -789,9 +892,9 @@ Recommended development flow:
 4. Update documentation for behavior changes.
 5. Open PR with validation evidence.
 
-## 15. License
+## 18. License
 
-## 16. PyPI Release Workflows
+## 19. PyPI Release Workflows
 
 ZANE includes automated packaging workflows in GitHub Actions:
 

@@ -122,7 +122,9 @@ Primary modules:
 - drug_discovery/training: training loop and closed-loop utilities
 - drug_discovery/evaluation: property/ADMET prediction and model evaluation
 - drug_discovery/physics: docking and MD simulation utilities
-- drug_discovery/synthesis: retrosynthesis and feasibility support
+- drug_discovery/synthesis: retrosynthesis and feasibility support (optional AiZynthFinder integration via `AIZYNTH_CONFIG`)
+- drug_discovery/generation: optional molecule generation backends (REINVENT4, GT4SD, Molformer)
+- drug_discovery/benchmarking: optional benchmarking backends (MOSES, GuacaMol)
 - drug_discovery/optimization: Bayesian and multi-objective optimization
 - drug_discovery/agents: multi-agent orchestration framework
 - drug_discovery/dashboard.py: terminal dashboard implementation
@@ -588,6 +590,22 @@ Generated compounds appear in rankings as `KB721H66-<FOCUS>-<N>` and are include
 1. Export top candidates.
 2. Use AI support to draft test priorities.
 3. Finalize shortlist with domain experts.
+
+### BoltzGen Binder Design Workflow
+
+Install the upstream package (`pip install boltzgen`) and launch the integrated wrapper:
+
+```bash
+zane boltzgen path/to/design.yaml \
+  --output outputs/boltzgen/demo \
+  --protocol protein-anything \
+  --num-designs 50 \
+  --budget 5 \
+  --top-k 3 \
+  --score-key refolding_rmsd
+```
+
+The CLI delegates to the official BoltzGen pipeline, reuses cached downloads when available, and returns a JSON summary of the top-ranked designs. Use `--steps` to run only parts of the pipeline or `--devices` to set accelerator counts.
 
 ## 11. Quality and CI/CD
 

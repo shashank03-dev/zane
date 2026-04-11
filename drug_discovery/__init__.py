@@ -16,6 +16,14 @@ __all__ = [
     "MolecularTransformer",
     "DrugModeler",
     "LlamaSupportAssistant",
+    "BoltzGenRunner",
+    "GenerationManager",
+    "ReinventBackend",
+    "GT4SDBackend",
+    "MolformerBackend",
+    "BenchmarkRunner",
+    "MosesBenchmarkBackend",
+    "GuacamolBenchmarkBackend",
 ]
 
 
@@ -37,4 +45,25 @@ def __getattr__(name: str) -> Any:
         from .ai_support import LlamaSupportAssistant
 
         return LlamaSupportAssistant
+    if name == "BoltzGenRunner":
+        from .boltzgen_adapter import BoltzGenRunner
+
+        return BoltzGenRunner
+    if name in {"GenerationManager", "ReinventBackend", "GT4SDBackend", "MolformerBackend"}:
+        from .generation.backends import GenerationManager, GT4SDBackend, MolformerBackend, ReinventBackend
+
+        return {
+            "GenerationManager": GenerationManager,
+            "ReinventBackend": ReinventBackend,
+            "GT4SDBackend": GT4SDBackend,
+            "MolformerBackend": MolformerBackend,
+        }[name]
+    if name in {"BenchmarkRunner", "MosesBenchmarkBackend", "GuacamolBenchmarkBackend"}:
+        from .benchmarking.backends import BenchmarkRunner, GuacamolBenchmarkBackend, MosesBenchmarkBackend
+
+        return {
+            "BenchmarkRunner": BenchmarkRunner,
+            "MosesBenchmarkBackend": MosesBenchmarkBackend,
+            "GuacamolBenchmarkBackend": GuacamolBenchmarkBackend,
+        }[name]
     raise AttributeError(f"module 'drug_discovery' has no attribute {name!r}")

@@ -4,8 +4,9 @@ Orchestrates the entire AI drug discovery process
 """
 
 import os
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -13,9 +14,17 @@ import torch
 from torch.utils.data import DataLoader
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
-from .data import DataCollector, MolecularDataset, MolecularFeaturizer, murcko_scaffold_split_molecular, train_test_split_molecular
-from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor
+from .data import (
+    DataCollector,
+    MolecularDataset,
+    MolecularFeaturizer,
+    murcko_scaffold_split_molecular,
+    train_test_split_molecular,
+)
+from .evaluation import ADMETPredictor, ModelEvaluator, PropertyPredictor, TorchDrugScorer
 from .models import EnsembleModel, MolecularGNN, MolecularTransformer
+from .physics import DiffDockAdapter, OpenFoldAdapter, OpenMMAdapter
+from .synthesis import MolecularTransformerAdapter, PistachioDatasets
 from .training import SelfLearningTrainer
 
 
@@ -503,3 +512,106 @@ class DrugDiscoveryPipeline:
             "stdout": result.stdout,
             "stderr": result.stderr,
         }
+
+    # ------------------------------------------------------------------
+    # New integrations: MolecularTransformer, TorchDrug, DiffDock,
+    # OpenFold, OpenMM, Pistachio
+    # ------------------------------------------------------------------
+
+    def predict_reaction(self, reactants_smiles: str, beam_size: int = 5) -> dict[str, Any]:
+        """Predict reaction product(s) using MolecularTransformer.
+
+        Args:
+            reactants_smiles: Reactant SMILES (dot-separated for multiple species).
+            beam_size: Beam width for transformer decoding.
+
+        Returns:
+            Dictionary with ``predictions``, ``scores``, ``success``, and ``error``.
+        """
+        adapter = MolecularTransformerAdapter(beam_size=beam_size)
+        result = adapter.predict(reactants_smiles)
+        return result.as_dict()
+
+    def score_properties_torchdrug(self, smiles: str, tasks: tuple[str, ...] = ("tox21",)) -> dict[str, Any]:
+        """Score molecular properties using TorchDrug GNN models.
+
+        Args:
+            smiles: Molecule SMILES string.
+            tasks: TorchDrug task names to evaluate.
+
+        Returns:
+            Dictionary with per-task ``scores``, ``success``, and ``error``.
+        """
+        scorer = TorchDrugScorer(tasks=tasks)
+        result = scorer.score(smiles)
+        return result.as_dict()
+
+    def dock_diffdock(self, ligand_smiles: str, protein_pdb_path: str, num_poses: int = 10) -> dict[str, Any]:
+        """Predict binding poses using DiffDock diffusion model.
+
+        Args:
+            ligand_smiles: Ligand SMILES string.
+            protein_pdb_path: Path to the target protein PDB file.
+            num_poses: Number of docking poses to generate.
+
+        Returns:
+            Dictionary with ``poses``, ``success``, and ``error``.
+        """
+        adapter = DiffDockAdapter(num_poses=num_poses)
+        result = adapter.dock(ligand_smiles, protein_pdb_path)
+        return result.as_dict()
+
+    def predict_protein_structure(self, sequence: str) -> dict[str, Any]:
+        """Predict a protein's 3D structure using OpenFold.
+
+        Args:
+            sequence: Amino-acid sequence (single-letter codes).
+
+        Returns:
+            Dictionary with ``pdb_string``, ``confidence``, ``success``, and ``error``.
+        """
+        adapter = OpenFoldAdapter()
+        result = adapter.predict_structure(sequence)
+        return result.as_dict()
+
+    def simulate_md(
+        self,
+        smiles: str,
+        protein_pdb_path: str | None = None,
+        temperature: float = 300.0,
+        num_steps: int = 10_000,
+    ) -> dict[str, Any]:
+        """Run a molecular-dynamics simulation via OpenMM (with fallback).
+
+        Args:
+            smiles: Ligand SMILES string.
+            protein_pdb_path: Optional path to a protein PDB file for complex
+                simulations.
+            temperature: Simulation temperature in Kelvin.
+            num_steps: Number of integration steps.
+
+        Returns:
+            Dictionary with ``stability_score``, ``binding_energy``, ``rmsd``,
+            ``success``, and ``error``.
+        """
+        adapter = OpenMMAdapter(temperature=temperature, num_steps=num_steps)
+        if protein_pdb_path:
+            result = adapter.simulate_complex(smiles, protein_pdb_path)
+        else:
+            result = adapter.simulate_ligand(smiles)
+        return result.as_dict()
+
+    def load_pistachio_reactions(self, dataset_path: str, limit: int = 1000, filter_drug_like: bool = False) -> dict[str, Any]:
+        """Load reaction data from a Pistachio dataset file.
+
+        Args:
+            dataset_path: Path to the Pistachio reaction dataset file.
+            limit: Maximum number of reactions to return.
+            filter_drug_like: Filter to drug-like reactions only.
+
+        Returns:
+            Dictionary with ``reactions`` list, ``count``, ``success``, and ``error``.
+        """
+        loader = PistachioDatasets(limit=limit, filter_drug_like=filter_drug_like)
+        result = loader.load(dataset_path)
+        return result.as_dict()

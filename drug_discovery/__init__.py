@@ -26,6 +26,7 @@ __all__ = [
     "MosesBenchmarkBackend",
     "GuacamolBenchmarkBackend",
     "EliteStackPipeline",
+    "ProgramStrategyEngine",
 ]
 
 
@@ -79,4 +80,8 @@ def __getattr__(name: str) -> Any:
         from .elite_stack import EliteStackPipeline
 
         return EliteStackPipeline
+    if name == "ProgramStrategyEngine":
+        from .strategy import ProgramStrategyEngine
+
+        return ProgramStrategyEngine
     raise AttributeError(f"module 'drug_discovery' has no attribute {name!r}")

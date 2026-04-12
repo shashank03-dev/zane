@@ -159,6 +159,12 @@ python -m drug_discovery.cli elite-pipeline \
   --reactants "CCO.CN" \
   --target-protein "EGFR" \
   --top-k 3
+
+# High-level discovery + manufacturing strategy planning
+python -m drug_discovery.cli strategy-plan \\
+  --smiles "CCO" "CCN" "c1ccccc1" \\
+  --top-k 2 \\
+  --tpp-name "respiratory_program"
 ```
 
 ### 3.3 Backend and Runtime Upgrade Coverage

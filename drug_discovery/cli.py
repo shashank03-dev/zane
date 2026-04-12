@@ -264,6 +264,18 @@ def main():
     )
     elite_parser.add_argument("--top-k", type=int, default=5, help="Number of top-ranked molecules to return.")
 
+    strategy_parser = subparsers.add_parser(
+        "strategy-plan",
+        help="Run high-level discovery + manufacturing strategy ranking for candidate molecules.",
+    )
+    strategy_parser.add_argument("--smiles", nargs="+", required=True, help="Candidate molecule SMILES strings.")
+    strategy_parser.add_argument("--top-k", type=int, default=5, help="Number of candidates to keep in output.")
+    strategy_parser.add_argument("--tpp-name", default="default_tpp", help="Name of target product profile.")
+    strategy_parser.add_argument("--min-qed", type=float, default=0.45, help="Minimum acceptable QED.")
+    strategy_parser.add_argument("--max-logp", type=float, default=4.5, help="Maximum acceptable logP.")
+    strategy_parser.add_argument("--max-mw", type=float, default=550.0, help="Maximum acceptable molecular weight.")
+    strategy_parser.add_argument("--max-sa", type=float, default=6.0, help="Maximum acceptable synthetic accessibility score.")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -290,6 +302,8 @@ def main():
         run_integrations_status()
     elif args.command == "elite-pipeline":
         run_elite_pipeline(args)
+    elif args.command == "strategy-plan":
+        run_strategy_plan(args)
     else:
         parser.print_help()
 
@@ -630,6 +644,22 @@ def run_elite_pipeline(args):
         target_protein=args.target_protein,
         top_k=max(1, int(args.top_k)),
     )
+    print(json.dumps(result, indent=2))
+
+
+def run_strategy_plan(args):
+    """Run discovery-to-manufacturing strategy scoring for candidates."""
+    from drug_discovery.strategy import ProgramStrategyEngine, TargetProductProfile
+
+    tpp = TargetProductProfile(
+        name=args.tpp_name,
+        min_qed=float(args.min_qed),
+        max_logp=float(args.max_logp),
+        max_mw=float(args.max_mw),
+        max_sa_score=float(args.max_sa),
+    )
+    engine = ProgramStrategyEngine(tpp=tpp)
+    result = engine.evaluate_candidates(smiles_list=list(args.smiles), top_k=max(1, int(args.top_k)))
     print(json.dumps(result, indent=2))
 
 

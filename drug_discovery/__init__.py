@@ -25,6 +25,7 @@ __all__ = [
     "BenchmarkRunner",
     "MosesBenchmarkBackend",
     "GuacamolBenchmarkBackend",
+    "EliteStackPipeline",
 ]
 
 
@@ -74,4 +75,8 @@ def __getattr__(name: str) -> Any:
             "MosesBenchmarkBackend": MosesBenchmarkBackend,
             "GuacamolBenchmarkBackend": GuacamolBenchmarkBackend,
         }[name]
+    if name == "EliteStackPipeline":
+        from .elite_stack import EliteStackPipeline
+
+        return EliteStackPipeline
     raise AttributeError(f"module 'drug_discovery' has no attribute {name!r}")

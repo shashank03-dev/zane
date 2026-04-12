@@ -242,6 +242,28 @@ def main():
 
     subparsers.add_parser("integrations", help="Show status of optional external integrations and submodules")
 
+    elite_parser = subparsers.add_parser(
+        "elite-pipeline",
+        help="Run the elite stack: TorchDrug -> Molecular Transformer -> DiffDock -> OpenMM",
+    )
+    elite_parser.add_argument(
+        "--smiles",
+        nargs="+",
+        required=True,
+        help="Candidate molecule SMILES strings to score and rank.",
+    )
+    elite_parser.add_argument(
+        "--reactants",
+        default="CCO.CN",
+        help="Reaction reactants string used for reaction-validation scoring.",
+    )
+    elite_parser.add_argument(
+        "--target-protein",
+        default="EGFR",
+        help="Protein target identifier used by docking scoring.",
+    )
+    elite_parser.add_argument("--top-k", type=int, default=5, help="Number of top-ranked molecules to return.")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -266,6 +288,8 @@ def main():
         run_benchmark(args)
     elif args.command == "integrations":
         run_integrations_status()
+    elif args.command == "elite-pipeline":
+        run_elite_pipeline(args)
     else:
         parser.print_help()
 
@@ -593,6 +617,20 @@ def run_integrations_status():
 
     payload = {"integrations": [status.as_dict() for status in get_all_integration_statuses()]}
     print(json.dumps(payload, indent=2))
+
+
+def run_elite_pipeline(args):
+    """Run elite stack orchestration and rank candidate molecules."""
+    from drug_discovery.elite_stack import EliteStackPipeline
+
+    pipeline = EliteStackPipeline()
+    result = pipeline.run(
+        molecules=list(args.smiles),
+        reactants=args.reactants,
+        target_protein=args.target_protein,
+        top_k=max(1, int(args.top_k)),
+    )
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

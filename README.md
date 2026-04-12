@@ -136,6 +136,31 @@ Tracked under `external/` as submodules:
 - MOSES (molecule quality benchmarking)
 - GuacaMol (drug design benchmark tasks)
 
+New elite integrations added for multi-stage chemistry + biology + physics workflows:
+
+- Molecular Transformer (reaction outcome prediction)
+- DiffDock (diffusion docking)
+- TorchDrug (GNN property scoring)
+- OpenFold (protein structure prediction)
+- OpenMM (molecular dynamics)
+- Pistachio (reaction dataset tooling)
+
+Sync them locally into `external/`:
+
+```bash
+bash scripts/pull_elite_repos.sh
+```
+
+Run the integrated ranking pipeline:
+
+```bash
+python -m drug_discovery.cli elite-pipeline \
+  --smiles "CCO" "CCN" "c1ccccc1" \
+  --reactants "CCO.CN" \
+  --target-protein "EGFR" \
+  --top-k 3
+```
+
 ### 3.3 Backend and Runtime Upgrade Coverage
 
 - `drug_discovery/synthesis/backends.py`

@@ -62,6 +62,54 @@ class IntegrationStatus:
 
 
 INTEGRATIONS: dict[str, IntegrationSpec] = {
+    "molecular_transformer": IntegrationSpec(
+        key="molecular_transformer",
+        name="Molecular Transformer",
+        purpose="Reaction outcome prediction",
+        url="https://github.com/pschwllr/MolecularTransformer",
+        python_modules=("onmt",),
+        submodule_path="external/MolecularTransformer",
+    ),
+    "diffdock": IntegrationSpec(
+        key="diffdock",
+        name="DiffDock",
+        purpose="Diffusion-based protein-ligand docking",
+        url="https://github.com/gcorso/DiffDock",
+        python_modules=("inference",),
+        submodule_path="external/DiffDock",
+    ),
+    "torchdrug": IntegrationSpec(
+        key="torchdrug",
+        name="TorchDrug",
+        purpose="Graph learning for molecular properties",
+        url="https://github.com/DeepGraphLearning/torchdrug",
+        python_modules=("torchdrug",),
+        submodule_path="external/torchdrug",
+    ),
+    "openfold": IntegrationSpec(
+        key="openfold",
+        name="OpenFold",
+        purpose="Protein structure prediction",
+        url="https://github.com/aqlaboratory/openfold",
+        python_modules=("openfold",),
+        submodule_path="external/openfold",
+    ),
+    "openmm": IntegrationSpec(
+        key="openmm",
+        name="OpenMM",
+        purpose="Molecular dynamics simulations",
+        url="https://github.com/openmm/openmm",
+        python_modules=("openmm",),
+        submodule_path="external/openmm",
+    ),
+    "pistachio": IntegrationSpec(
+        key="pistachio",
+        name="Pistachio",
+        purpose="Reaction dataset tooling",
+        url="https://github.com/CASPistachio/pistachio",
+        python_modules=("pistachio",),
+        submodule_path="external/pistachio",
+    ),
     "aizynthfinder": IntegrationSpec(
         key="aizynthfinder",
         name="AiZynthFinder",

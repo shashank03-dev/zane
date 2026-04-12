@@ -32,8 +32,8 @@ class LlamaSupportAssistant:
 
     def __init__(self, config: AISupportConfig | None = None):
         self.config = config or AISupportConfig()
-        self._tokenizer: Any | None = None
-        self._model: Any | None = None
+        self._tokenizer: Any | None = None  # AutoTokenizer when loaded
+        self._model: Any | None = None  # AutoModelForCausalLM when loaded
 
     def _load(self) -> None:
         if self._tokenizer is not None and self._model is not None:
@@ -79,7 +79,22 @@ class LlamaSupportAssistant:
         temperature: float = 0.7,
         top_p: float = 0.9,
     ) -> str:
-        """Generate a response using the configured Llama model."""
+        """Generate a response using the configured Llama model.
+
+        Args:
+            user_prompt: User question or request (cannot be empty).
+            context: Optional domain-specific context to prepend to prompt.
+            max_new_tokens: Maximum new tokens to generate.
+            temperature: Sampling temperature (0 = deterministic, higher = more creative).
+            top_p: Nucleus sampling parameter (0, 1].
+
+        Returns:
+            Generated response text.
+
+        Raises:
+            ValueError: If user_prompt is empty or generation parameters are invalid.
+            RuntimeError: If model loading or generation fails.
+        """
         if not user_prompt or not user_prompt.strip():
             raise ValueError("user_prompt cannot be empty")
 

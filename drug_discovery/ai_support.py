@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from importlib.util import find_spec
 from typing import Any
 
 import torch
@@ -46,12 +47,14 @@ class LlamaSupportAssistant:
 
         try:
             self._tokenizer = AutoTokenizer.from_pretrained(self.config.model_id)
-            dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-            self._model = AutoModelForCausalLM.from_pretrained(
-                self.config.model_id,
-                dtype=dtype,
-                device_map=self.config.device_map,
-            )
+            torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+
+            # `device_map` requires accelerate; fall back cleanly when unavailable.
+            model_kwargs: dict[str, Any] = {"torch_dtype": torch_dtype}
+            if self.config.device_map and find_spec("accelerate") is not None:
+                model_kwargs["device_map"] = self.config.device_map
+
+            self._model = AutoModelForCausalLM.from_pretrained(self.config.model_id, **model_kwargs)
             if (
                 getattr(self._tokenizer, "pad_token_id", None) is None
                 and getattr(self._tokenizer, "eos_token_id", None) is not None

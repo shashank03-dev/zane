@@ -297,6 +297,8 @@ make bootstrap-dashboard
 pip install -r requirements.txt
 ```
 
+> Note: `deepchem` currently publishes wheels only for Python versions < 3.12. On Python 3.12+, the base install will skip `deepchem`; if you need those features, install with Python 3.11 or below or add `deepchem` manually in an environment that supports it.
+
 ### Install as a Package
 
 Local source install:

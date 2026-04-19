@@ -12,26 +12,11 @@ A production-minded, research-first platform for molecular intelligence workflow
 
 > **License Notice:** This repository is not open-source. Viewing is limited to educational purposes; any other use requires prior written permission from Advaith Vaithianathan (advaithv.av7@gmail.com).
 
-**ZANE Features:**
-- **Professional Terminal Interface**: SOTA AI-driver KB721H66 branded dashboard with 7-line ASCII header
-- **Simple-by-Default Design**: Clean default view with click-through access to detailed analysis panels
-- **Simulation-Only Compound Design**: Generate virtual carbon/hydrocarbon candidates from user-defined characteristics
-- **Real-Time Training Monitoring**: Track epochs to 100% completion with live loss metrics and model health
-- **Drug Composition Analysis**: Beta-mode composition tables showing probable active/stabilizer/carrier percentages
-- **Command-Driven Experience**: Guided setup, aliases (`start`, `go`), and on-demand detail panels
+**ZANE Features:** ZANE ships with a professional terminal interface built around the KB721H66-branded dashboard and a seven-line ASCII header, presenting a simple-by-default layout that still lets operators click through to detailed analysis panels when needed. It supports simulation-only compound design so users can generate virtual carbon and hydrocarbon candidates from user-defined characteristics while monitoring training in real time, tracking every epoch to 100% completion with live loss metrics and model health. Beta-mode composition tables surface probable active, stabilizer, and carrier percentages to keep formulation in view, and the command-driven experience—complete with guided setup plus aliases such as `start` and `go`—keeps the workflow navigable without sacrificing depth.
 
 ## Executive Summary
 
-ZANE unifies the core layers of computational drug discovery:
-
-- Molecular data ingestion and harmonization  
-- Learning pipelines (GNN, Transformer, Ensemble) with 100-epoch completion tracking
-- Property and ADMET assessment with simulation-only composition analysis
-- Custom virtual compound generation (hydrocarbon/carbon compounds from traits)
-- Physics-informed simulation hooks
-- Synthesis feasibility tooling
-- **Professional terminal dashboard** with ZANE branding and simple-by-default view
-- Meta Llama-powered AI support with web/PDF evidence integration
+ZANE unifies the core layers of computational drug discovery by connecting molecular data ingestion and harmonization with learning pipelines (GNN, Transformer, and ensemble modes) that track 100-epoch completion. Property and ADMET assessment sit beside simulation-only composition analysis and custom virtual compound generation for hydrocarbon or carbon scaffolds derived from user-specified traits. Physics-informed simulation hooks and synthesis feasibility tooling keep manufacturability in scope, while the branded terminal dashboard provides a simple-by-default view that can expand to full detail. A Meta Llama-powered assistant rounds out the loop with web/PDF evidence integration for rapid interpretation and ranking support.
 
 The repository is intended for scientific teams that need a repeatable, extensible, and operator-friendly environment for accelerating discovery iterations.
 
@@ -58,53 +43,29 @@ The repository is intended for scientific teams that need a repeatable, extensib
 
 ## 1. Platform Scope
 
-ZANE is designed to support the full loop of computational triage:
-
-1. Gather molecules from multiple sources.
-2. Convert molecules to model-ready representations.
-3. Train and evaluate predictive models.
-4. Estimate ADMET and related quality signals.
-5. Incorporate simulation evidence where available.
-6. Rank and export candidates for expert review.
+ZANE is designed to support the full loop of computational triage, beginning with molecule acquisition from public and proprietary sources, normalizing each structure into model-ready graph and sequence representations, and running training plus evaluation cycles on predictive models. Downstream stages estimate ADMET and related developability signals, fold in simulation evidence such as docking proxies or MD stability when available, and finish by ranking and exporting candidates for expert review with the same provenance and scoring context preserved end to end.
 
 ## 2. Key Capabilities
 
 ### Data Intelligence
 
-- Multi-source collection pipelines (PubChem, ChEMBL, approved drugs)
-- Deduplicated dataset merging and caching
-- Structured molecular featurization workflows
+Multi-source collection pipelines span PubChem, ChEMBL, and approved-drug corpora, merging and deduplicating datasets before caching structured featurizations. Standardized workflows convert molecules into graph tensors and sequence/fingerprint views so downstream learners receive consistent, high-quality inputs.
 
 ### Modeling
 
-- Graph Neural Networks for structure-aware learning
-- Transformer pipelines for sequence/fingerprint modeling
-- Ensemble mode for robust aggregate scoring
-- Training with detailed epoch-level progress (100/100 epochs, 100% completion tracking)
+Structure-aware Graph Neural Networks, transformer pipelines for sequence and fingerprint modeling, and ensemble configurations run side by side, with training telemetry exposing detailed epoch-level progress (including 100/100 completion tracking) to verify convergence and model health.
 
 ### Evaluation and Ranking
 
-- Property prediction support
-- ADMET and quality indicators (including QED and SA)
-- Simulation-only drug composition analysis for beta testing
-- Custom compound generation from user-defined characteristics (consumability, performance, usage profiles)
-- Candidate-level result aggregation for triage
+Property prediction combines ADMET indicators such as QED and SA with simulation-only composition analysis, allowing beta-mode assessment of probable active, stabilizer, and carrier contributions. Custom compound generation accepts user-defined characteristics related to consumability, performance, and usage profiles, then aggregates candidate-level results into triage-ready rankings.
 
 ### Operations
 
-- Unified CLI command surface with aliases (`start`, `go`)
-- Professional Rich terminal dashboard with ZANE ASCII branding
-- Simple-by-default dashboard with command-driven detail panels (`--detail-panels`)
-- Simulation-only custom hydrocarbon/carbon compound generation (`--custom-characteristics`)
-- Interactive guided setup mode (`--guided`)
-- Artifact-friendly execution model
+A unified CLI surface (aliases like `start` and `go`) feeds a Rich-powered dashboard that renders ZANE ASCII branding and keeps the default view uncluttered while enabling command-driven detail panels (`--detail-panels`). Simulation-only hydrocarbon and carbon compound design (`--custom-characteristics`), guided setup (`--guided`), and artifact-friendly execution ensure reproducible runs with controllable output surfaces.
 
 ### AI Assistance
 
-- Meta Llama-backed assistant for strategy and interpretation support
-- Context-injected prompting for research workflows
-- Query-driven ranking and filtering
-- Web/PDF evidence collection and Cerebras API integration
+A Meta Llama-backed assistant supports strategy and interpretation, injecting context into research prompts, handling query-driven ranking and filtering, and collecting web/PDF evidence through Cerebras API integration to keep decision support inside the same workflow.
 
 ## 3. 2026 Upgrade Highlights
 
@@ -112,42 +73,17 @@ This release adds deep external-ecosystem interoperability and upgrades simulati
 
 ### 3.1 External Ecosystem Integration Layer
 
-- Added centralized integration registry in `drug_discovery/integrations.py`.
-- Added external tooling bridge in `drug_discovery/external_tooling.py`.
-- Added runtime status introspection command:
+The external integration layer is anchored by a centralized registry in `drug_discovery/integrations.py` and an external tooling bridge in `drug_discovery/external_tooling.py`, with an accompanying status command:
 
 ```bash
 python -m drug_discovery.cli integrations
 ```
 
-This command reports:
-
-- Submodule registration status
-- Local checkout presence
-- Python import availability
-- Effective integration availability
+When executed, the command reports submodule registration status, whether local checkouts exist, Python import availability, and whether an integration is effectively runnable in the current environment.
 
 ### 3.2 Integrated Repositories
 
-Tracked under `external/` as submodules:
-
-- AiZynthFinder (retrosynthesis core)
-- REINVENT4 (RL molecule generation)
-- GT4SD molecular-design (multi-model generation pipeline)
-- GT4SD core framework (property/scoring/generation ecosystem)
-- RDKit (core cheminformatics toolkit)
-- IBM Molformer (transformer chemistry models)
-- MOSES (molecule quality benchmarking)
-- GuacaMol (drug design benchmark tasks)
-
-New elite integrations added for multi-stage chemistry + biology + physics workflows:
-
-- Molecular Transformer (reaction outcome prediction)
-- DiffDock (diffusion docking)
-- TorchDrug (GNN property scoring)
-- OpenFold (protein structure prediction)
-- OpenMM (molecular dynamics)
-- Pistachio (reaction dataset tooling)
+The `external/` directory tracks interoperable research stacks as submodules, including AiZynthFinder for retrosynthesis, REINVENT4 and GT4SD (molecular-design and core frameworks) for generation, RDKit for cheminformatics, IBM Molformer for transformer chemistry, and benchmarking suites such as MOSES and GuacaMol. Additional elite integrations extend the workflow with Molecular Transformer for reaction outcomes, DiffDock for diffusion docking, TorchDrug for GNN-based scoring, OpenFold for protein structures, OpenMM for molecular dynamics, and Pistachio for reaction dataset support, creating a single runway for chemistry, biology, and physics-aware modeling.
 
 Sync them locally into `external/`:
 
@@ -241,11 +177,21 @@ python -m drug_discovery.cli synthesis-research "CCO" --max-results 3
 
 ### 3.7 Physics-Aware Generation Stack
 
-- New `physics-gen` CLI pipeline that assembles BRICS/RECAP fragments, refines with conformer-ensemble diffusion, and ranks candidates with multi-objective guidance (binding, ADMET, synthesizability, novelty, MD stability).
-- Energy landscape exploration with Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks.
-- Risk-aware routing (toxicity, reactivity, synthetic difficulty) plus retrosynthesis-informed reaction likelihood to bias toward low-risk, feasible candidates.
-- Quantum/lightweight descriptors (HOMO–LUMO proxy, partial charges), scaffold hopping, chemical-space diversity/novelty metrics, and temperature-controlled exploration knobs.
-- Loop-ready outputs for generate → dock/simulate → score → retrain experiments.
+The `physics-gen` CLI assembles BRICS/RECAP fragments, refines candidates with conformer-ensemble diffusion, and ranks them via multi-objective guidance that blends binding affinity proxies, ADMET surrogates, synthesizability, novelty, and MD stability. It explores energy landscapes using Boltzmann-weighted conformer scoring, steric-fit estimation, and pharmacophore-aware constraint checks, while risk-aware routing factors toxicity, reactivity, and synthetic difficulty alongside retrosynthesis-informed reaction likelihood to steer toward feasible, lower-risk molecules. Quantum and lightweight descriptors (HOMO–LUMO proxies, partial charges), scaffold hopping, chemical-space diversity metrics, and temperature-controlled exploration knobs are available, and outputs are structured for generate → dock/simulate → score → retrain loops. The multi-objective ranker follows a weighted fusion:
+
+$$
+S_{\\text{composite}} = w_{\\text{admet}}\\, S_{\\text{admet}} + w_{\\text{bind}}\\, S_{\\text{dock}} + w_{\\text{syn}}\\, S_{\\text{sa}} + w_{\\text{novel}}\\, S_{\\text{div}} + w_{\\text{md}}\\, S_{\\text{stability}}
+$$
+
+and the docking/MD-informed energy channels are normalized through a Boltzmann-weighted conformer aggregation:
+
+$$
+E_{\\text{eff}} = -k_B T \\log \\left( \\sum_i \\exp\\left(-\\frac{E_i}{k_B T}\\right) \\right)
+$$
+
+which feeds into the same composite score after scaling.
+
+![Modeling funnel and composite objective](docs/assets/analytics/modeling_funnel.svg)
 
 Example:
 

@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 380">
+  <style>
+    .title { font: 16px 'Helvetica', sans-serif; fill: #0f2940; }
+    .label { font: 13px 'Helvetica', sans-serif; fill: #1b3c68; }
+    .value { font: 13px 'Helvetica', sans-serif; fill: #0f2940; font-weight: bold; }
+    .tick { stroke: #c6cbd3; stroke-width: 1; }
+  </style>
+  <rect x="0" y="0" width="900" height="380" fill="#f7f9fb" />
+  <rect x="28" y="22" width="844" height="336" rx="14" fill="white" stroke="#dce3ed" stroke-width="1.5" />
+
+  <!-- ADMET panel -->
+  <text x="60" y="70" class="title">ADMET &amp; developability snapshot</text>
+  <line x1="60" y1="90" x2="420" y2="90" class="tick" />
+  <text x="60" y="120" class="label">Permeability</text>
+  <rect x="200" y="105" width="180" height="18" fill="#e9eff6" stroke="#c6cbd3" />
+  <rect x="200" y="105" width="152" height="18" fill="#6fb0e8" />
+  <text x="390" y="120" class="value">0.84</text>
+
+  <text x="60" y="152" class="label">Solubility</text>
+  <rect x="200" y="137" width="180" height="18" fill="#e9eff6" stroke="#c6cbd3" />
+  <rect x="200" y="137" width="138" height="18" fill="#1f77b4" />
+  <text x="390" y="152" class="value">0.77</text>
+
+  <text x="60" y="184" class="label">hERG risk</text>
+  <rect x="200" y="169" width="180" height="18" fill="#ffe9e6" stroke="#c6cbd3" />
+  <rect x="200" y="169" width="72" height="18" fill="#ff7f0e" />
+  <text x="390" y="184" class="value">0.40</text>
+
+  <text x="60" y="216" class="label">CYP liability</text>
+  <rect x="200" y="201" width="180" height="18" fill="#ffe9e6" stroke="#c6cbd3" />
+  <rect x="200" y="201" width="90" height="18" fill="#d62728" />
+  <text x="390" y="216" class="value">0.50</text>
+
+  <text x="60" y="248" class="label">Synthetic access</text>
+  <rect x="200" y="233" width="180" height="18" fill="#e9eff6" stroke="#c6cbd3" />
+  <rect x="200" y="233" width="160" height="18" fill="#2ca02c" />
+  <text x="390" y="248" class="value">0.89</text>
+
+  <rect x="60" y="270" width="340" height="64" rx="10" fill="#f0f5fb" stroke="#dce3ed" />
+  <text x="75" y="296" class="label">Composite developability</text>
+  <text x="75" y="322" class="value">Weighted score: 0.81, flagged: CYP + hERG (retrain)</text>
+
+  <!-- Epoch panel -->
+  <text x="480" y="70" class="title">Epoch progression</text>
+  <line x1="480" y1="90" x2="820" y2="90" class="tick" />
+  <line x1="500" y1="290" x2="830" y2="290" stroke="#0f2940" stroke-width="2" />
+  <line x1="500" y1="120" x2="500" y2="290" stroke="#0f2940" stroke-width="2" />
+  <polyline points="500,260 560,220 620,190 680,165 740,150 800,142" fill="none" stroke="#1f77b4" stroke-width="3" stroke-linecap="round" />
+  <polyline points="500,270 560,235 620,210 680,190 740,180 800,176" fill="none" stroke="#2ca02c" stroke-width="3" stroke-dasharray="7 4" stroke-linecap="round" />
+  <circle cx="560" cy="220" r="5" fill="#1f77b4" />
+  <circle cx="620" cy="190" r="5" fill="#1f77b4" />
+  <circle cx="680" cy="165" r="5" fill="#1f77b4" />
+  <circle cx="740" cy="150" r="5" fill="#1f77b4" />
+  <circle cx="800" cy="142" r="5" fill="#1f77b4" />
+
+  <rect x="650" y="110" width="190" height="60" rx="10" fill="white" stroke="#dce3ed" />
+  <text x="665" y="134" class="value">Loss: 0.14 @ epoch 92/100</text>
+  <text x="665" y="154" class="label">Val AUC 0.89 | early-stop safe</text>
+
+  <rect x="500" y="300" width="330" height="36" rx="8" fill="#f0f5fb" stroke="#dce3ed" />
+  <text x="514" y="323" class="label">Blue: train loss ↓ | Green: val loss ↓ | trend shows stable generalization</text>
+</svg>

@@ -1308,10 +1308,16 @@ def run_dashboard(
     motion_intensity: int = 2,
 ) -> None:
     """Run the ZANE terminal dashboard in static or live mode."""
-    console = Console()
+    color_system = os.getenv("ZANE_COLOR_SYSTEM", "auto")
+    width_env = os.getenv("ZANE_DASHBOARD_WIDTH", "").strip()
+    console_width = int(width_env) if width_env.isdigit() else None
+    console = Console(force_terminal=True, color_system=color_system, width=console_width)
 
     if not user_query.strip():
-        user_query = console.input("[bold cyan]Enter drug need / disease query:[/bold cyan] ").strip()
+        if console.is_interactive:
+            user_query = console.input("[bold cyan]Enter drug need / disease query:[/bold cyan] ").strip()
+        else:
+            user_query = "cold congestion and cough"
     if not user_query:
         user_query = "cold congestion and cough"
     if not filter_query:

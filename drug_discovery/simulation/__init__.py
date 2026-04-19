@@ -1,30 +1,9 @@
-"""
-Biological Response Simulation Module
+"""ZANE Simulation — Physics-based simulation and ML-accelerated FEP."""
 
-Provides in silico testing of drug effects with:
-- ADME (Absorption, Distribution, Metabolism, Excretion) prediction
-- Dose-response modeling (Hill equation)
-- Cellular response simulation
-- Drug-likeness assessment (Lipinski, Veber rules)
-- Multi-scale biological modeling
-"""
-
-from drug_discovery.simulation.biological_response import (
-    BiologicalResponseSimulator,
-    ADMEPredictor,
-    DoseResponseSimulator,
-    CellularResponseSimulator,
-    ADMEProperties,
-    DoseResponse,
-    CellularResponse,
-)
-
-__all__ = [
-    "BiologicalResponseSimulator",
-    "ADMEPredictor",
-    "DoseResponseSimulator",
-    "CellularResponseSimulator",
-    "ADMEProperties",
-    "DoseResponse",
-    "CellularResponse",
-]
+__all__ = []
+try:
+    from drug_discovery.simulation.free_energy import (
+        FEPPipeline, FEPConfig, FEPSurrogateNetwork, generate_lambda_schedule)
+    __all__.extend(["FEPPipeline", "FEPConfig", "FEPSurrogateNetwork", "generate_lambda_schedule"])
+except ImportError:
+    pass

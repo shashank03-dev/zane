@@ -1,16 +1,11 @@
-"""
-Multi-Objective Optimization for Drug Discovery
-Optimizes binding, ADMET, toxicity, and synthesis simultaneously
-"""
+"""ZANE Optimization — Bayesian and multi-objective optimization."""
 
-from .bayesian import ActiveLearner, BayesianOptimizer, UncertaintyEstimator
-from .multi_objective import ConstraintFilter, MultiObjectiveOptimizer, ParetoOptimizer
-
-__all__ = [
-    "MultiObjectiveOptimizer",
-    "ParetoOptimizer",
-    "ConstraintFilter",
-    "BayesianOptimizer",
-    "UncertaintyEstimator",
-    "ActiveLearner",
-]
+__all__ = []
+try:
+    from drug_discovery.optimization.multi_objective import (
+        MultiObjectiveBayesianOptimizer, MOBOConfig,
+        GaussianProcessSurrogate, is_pareto_efficient, hypervolume_indicator)
+    __all__.extend(["MultiObjectiveBayesianOptimizer", "MOBOConfig",
+        "GaussianProcessSurrogate", "is_pareto_efficient", "hypervolume_indicator"])
+except ImportError:
+    pass

@@ -1,11 +1,21 @@
-"""ZANE Evaluation — Unified evaluation with uncertainty, ADMET, and validation."""
+"""ZANE Evaluation — Guarded imports for uncertainty, ADMET, calibration."""
 
-from drug_discovery.evaluation.uncertainty import (
-    MCDropoutPredictor, DeepEnsemble, ConformalPredictor,
-    UncertaintyConfig, expected_calibration_error, regression_calibration_error)
-from drug_discovery.evaluation.advanced_admet import (
-    AdvancedADMETPredictor, ADMETConfig, ADMET_ENDPOINTS, compute_admet_profile)
+import logging
+logger = logging.getLogger(__name__)
+__all__ = []
 
-__all__ = ["MCDropoutPredictor", "DeepEnsemble", "ConformalPredictor",
-    "UncertaintyConfig", "expected_calibration_error", "regression_calibration_error",
-    "AdvancedADMETPredictor", "ADMETConfig", "ADMET_ENDPOINTS", "compute_admet_profile"]
+try:
+    from drug_discovery.evaluation.uncertainty import (
+        MCDropoutPredictor, DeepEnsemble, ConformalPredictor,
+        UncertaintyConfig, expected_calibration_error, regression_calibration_error)
+    __all__.extend(["MCDropoutPredictor", "DeepEnsemble", "ConformalPredictor",
+        "UncertaintyConfig", "expected_calibration_error", "regression_calibration_error"])
+except ImportError as e:
+    logger.debug(f"Uncertainty module not available: {e}")
+
+try:
+    from drug_discovery.evaluation.advanced_admet import (
+        AdvancedADMETPredictor, ADMETConfig, ADMET_ENDPOINTS, compute_admet_profile)
+    __all__.extend(["AdvancedADMETPredictor", "ADMETConfig", "ADMET_ENDPOINTS", "compute_admet_profile"])
+except ImportError as e:
+    logger.debug(f"Advanced ADMET not available: {e}")

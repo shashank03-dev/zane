@@ -1,19 +1,13 @@
-"""Data utilities for molecular collection and featurization."""
+"""ZANE Data — Molecular data collection, featurization, pipelines."""
 
-from .collector import DataCollector
-from .dataset import (
-	MolecularDataset,
-	MolecularFeaturizer,
-	murcko_scaffold_kfold_split_molecular,
-	murcko_scaffold_split_molecular,
-	train_test_split_molecular,
-)
-
-__all__ = [
-	"DataCollector",
-	"MolecularDataset",
-	"MolecularFeaturizer",
-	"murcko_scaffold_kfold_split_molecular",
-	"train_test_split_molecular",
-	"murcko_scaffold_split_molecular",
-]
+__all__ = []
+try:
+    from drug_discovery.data.pipeline import (
+        MolecularDataset, validate_smiles, validate_batch,
+        compute_descriptors, compute_morgan_fingerprint,
+        smiles_to_graph, lipinski_filter, tanimoto_similarity, is_valid_smiles_fast)
+    __all__.extend(["MolecularDataset", "validate_smiles", "validate_batch",
+        "compute_descriptors", "compute_morgan_fingerprint", "smiles_to_graph",
+        "lipinski_filter", "tanimoto_similarity", "is_valid_smiles_fast"])
+except ImportError:
+    pass

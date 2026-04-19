@@ -1,23 +1,9 @@
-"""
-Physics-Informed Validation Module
-Molecular docking, dynamics simulation, and energy calculations
-"""
+"""ZANE Physics — Docking, molecular dynamics, physics-based scoring."""
 
-from .diffdock_adapter import DiffDockAdapter, DiffDockResult, DockingPose
-from .docking import DockingEngine
-from .md_simulator import EnergyCalculator, MolecularDynamicsSimulator
-from .openmm_adapter import MDSimulationResult, OpenMMAdapter
-from .protein_structure import OpenFoldAdapter, StructurePrediction
-
-__all__ = [
-    "DockingEngine",
-    "MolecularDynamicsSimulator",
-    "EnergyCalculator",
-    "DiffDockAdapter",
-    "DiffDockResult",
-    "DockingPose",
-    "OpenFoldAdapter",
-    "StructurePrediction",
-    "OpenMMAdapter",
-    "MDSimulationResult",
-]
+__all__ = []
+try:
+    from drug_discovery.physics.docking import (
+        DockingPipeline, DockingConfig, DockingResult, VinaBackend)
+    __all__.extend(["DockingPipeline", "DockingConfig", "DockingResult", "VinaBackend"])
+except ImportError:
+    pass

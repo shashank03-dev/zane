@@ -738,3 +738,35 @@ class DrugDiscoveryPipeline:
 
         generator = INDGenerator(kg_interface=None)
         return generator.generate_application({"name": drug_name}, citation_ids=["cit_1", "cit_2"])
+
+    # ------------------------------------------------------------------
+    # Modules 15-18: Xenobiology, Chronobiology, Nanobotics, Meta-Learning
+    # ------------------------------------------------------------------
+
+    def design_xenoprotein(self) -> dict[str, Any]:
+        """Design a protein with an expanded synthetic alphabet (Module 15)."""
+        from .xenobiology import XenoProteinGenerator
+
+        generator = XenoProteinGenerator()
+        return generator.design_xenoprotein()
+
+    def simulate_aging(self, drug_name: str) -> dict[str, Any]:
+        """Simulate long-term epigenetic effects over human lifespan (Module 16)."""
+        from .chronobiology import EpigeneticAgingEngine
+
+        engine = EpigeneticAgingEngine()
+        return engine.simulate_lifespan_impact({"name": drug_name})
+
+    def train_nanobot_swarm(self) -> dict[str, Any]:
+        """Train programmable nanobot swarm intelligence (Module 17)."""
+        from .nanobotics import NanobotMARL
+
+        marl = NanobotMARL()
+        return marl.train_swarm_intelligence({"tissue_type": "tumor"})
+
+    async def run_singularity_workflow(self, drug_name: str):
+        """Execute end-to-end singularity workflow (Module 1-18)."""
+        from .singularity_engine import SingularityEngine
+
+        engine = SingularityEngine()
+        return await engine.execute_singularity_workflow({"name": drug_name})

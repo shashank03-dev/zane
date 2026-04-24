@@ -279,6 +279,34 @@ INTEGRATIONS: dict[str, IntegrationSpec] = {
         url="https://github.com/run-llama/llama_index",
         python_modules=("llama_index",),
     ),
+    "pyrosetta": IntegrationSpec(
+        key="pyrosetta",
+        name="PyRosetta",
+        purpose="Protein structure modeling and design",
+        url="https://github.com/RosettaCommons/pyrosetta",
+        python_modules=("pyrosetta",),
+    ),
+    "pyjulia": IntegrationSpec(
+        key="pyjulia",
+        name="PyJulia",
+        purpose="Python interface to the Julia language",
+        url="https://github.com/JuliaPy/pyjulia",
+        python_modules=("julia",),
+    ),
+    "ray": IntegrationSpec(
+        key="ray",
+        name="Ray",
+        purpose="Distributed computing and RLlib",
+        url="https://github.com/ray-project/ray",
+        python_modules=("ray",),
+    ),
+    "pettingzoo": IntegrationSpec(
+        key="pettingzoo",
+        name="PettingZoo",
+        purpose="Multi-agent reinforcement learning environments",
+        url="https://github.com/Farama-Foundation/PettingZoo",
+        python_modules=("pettingzoo",),
+    ),
 }
 
 

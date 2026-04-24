@@ -306,3 +306,45 @@ try:
     )
 except Exception:
     pass
+
+# ── Modules 15-18: Singularity Engine & Advanced Biotech ──────────────────────
+try:
+    from drug_discovery.chronobiology import EpigeneticAgingEngine as EpigeneticAgingEngine
+    from drug_discovery.meta_learning import (
+        CodeMutator as CodeMutator,
+    )
+    from drug_discovery.meta_learning import (
+        HypothesisGenerator as HypothesisGenerator,
+    )
+    from drug_discovery.meta_learning import (
+        SelfImprovementOrchestrator as SelfImprovementOrchestrator,
+    )
+    from drug_discovery.nanobotics import (
+        DNAGateSimulator as DNAGateSimulator,
+    )
+    from drug_discovery.nanobotics import (
+        NanobotMARL as NanobotMARL,
+    )
+    from drug_discovery.singularity_engine import SingularityEngine as SingularityEngine
+    from drug_discovery.xenobiology import (
+        OrthogonalTranslationSimulator as OrthogonalTranslationSimulator,
+    )
+    from drug_discovery.xenobiology import (
+        XenoProteinGenerator as XenoProteinGenerator,
+    )
+
+    __all__.extend(
+        [
+            "SingularityEngine",
+            "XenoProteinGenerator",
+            "OrthogonalTranslationSimulator",
+            "EpigeneticAgingEngine",
+            "DNAGateSimulator",
+            "NanobotMARL",
+            "CodeMutator",
+            "HypothesisGenerator",
+            "SelfImprovementOrchestrator",
+        ]
+    )
+except Exception:
+    pass

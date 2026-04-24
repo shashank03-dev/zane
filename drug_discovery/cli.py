@@ -361,6 +361,22 @@ def main():
     apex_parser = subparsers.add_parser("apex-run", help="Run comprehensive asynchronous Apex workflow")
     apex_parser.add_argument("drug_name", help="Name of the drug candidate")
 
+    # Singularity command
+    singularity_parser = subparsers.add_parser(
+        "singularity-run", help="Run end-to-end Singularity workflow (18 modules)"
+    )
+    singularity_parser.add_argument("drug_name", help="Name of the drug candidate")
+
+    # Xenobiology command
+    subparsers.add_parser("design-xeno", help="Design xenoprotein with expanded alphabet")
+
+    # Chronobiology command
+    aging_parser = subparsers.add_parser("simulate-aging", help="Simulate lifespan epigenetic effects")
+    aging_parser.add_argument("drug_name", help="Name of the drug candidate")
+
+    # Nanobotics command
+    subparsers.add_parser("train-swarm", help="Train nanobot swarm intelligence")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -407,6 +423,14 @@ def main():
         run_generate_ind(args)
     elif args.command == "apex-run":
         run_apex_workflow(args)
+    elif args.command == "singularity-run":
+        run_singularity_workflow(args)
+    elif args.command == "design-xeno":
+        run_design_xeno(args)
+    elif args.command == "simulate-aging":
+        run_simulate_aging(args)
+    elif args.command == "train-swarm":
+        run_train_swarm(args)
     else:
         parser.print_help()
 
@@ -870,6 +894,49 @@ def run_apex_workflow(args):
     result = asyncio.run(pipeline.run_apex_orchestration(args.drug_name))
     print("\nApex Workflow Completed:")
     print(result)
+
+
+def run_singularity_workflow(args):
+    """Run end-to-end Singularity workflow."""
+    import asyncio
+
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    print(f"Starting ZANE Singularity workflow for {args.drug_name}...")
+    result = asyncio.run(pipeline.run_singularity_workflow(args.drug_name))
+    print("\nSingularity Workflow Completed:")
+    print(json.dumps(result, indent=2))
+
+
+def run_design_xeno(args):
+    """Design xenoprotein."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.design_xenoprotein()
+    print("\nXenoprotein Design Result:")
+    print(json.dumps(result, indent=2))
+
+
+def run_simulate_aging(args):
+    """Simulate lifespan epigenetic effects."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.simulate_aging(args.drug_name)
+    print("\nLifespan Aging Simulation Result:")
+    print(json.dumps(result, indent=2))
+
+
+def run_train_swarm(args):
+    """Train nanobot swarm."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.train_nanobot_swarm()
+    print("\nNanobot Swarm Training Result:")
+    print(json.dumps(result, indent=2))
 
 
 if __name__ == "__main__":

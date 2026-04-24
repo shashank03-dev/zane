@@ -6,20 +6,7 @@ This module provides end-to-end drug design capabilities:
 - Effectiveness and toxicity testing
 - Multi-objective optimization to balance success and safety
 - Counter-substance finder for risk mitigation
-
-Example usage::
-
-    from drug_discovery.drugmaking import CustomDrugmakingModule, CounterSubstanceFinder
-
-    # Create the drugmaking module
-    module = CustomDrugmakingModule()
-
-    # Run end-to-end optimization
-    result = module.run_end_to_end(target_objectives=["potency", "safety"])
-
-    # Find counter-substances for risk mitigation
-    finder = CounterSubstanceFinder()
-    counter_substances = finder.find_counter_substances(drug_smiles="CCO")
+- Delivery system generation (LNPs, polymers)
 """
 
 from __future__ import annotations
@@ -35,6 +22,9 @@ from drug_discovery.drugmaking.risk_mitigation import (
     CounterSubstanceResult,
 )
 
+from .delivery_systems import LNP, DeliverySystem, PolymericSystem
+from .vae_generator import DeliveryGenerator, DeliveryVAE
+
 __all__ = [
     "CustomDrugmakingModule",
     "CompoundTestResult",
@@ -42,4 +32,9 @@ __all__ = [
     "OptimizationConfig",
     "CounterSubstanceFinder",
     "CounterSubstanceResult",
+    "LNP",
+    "PolymericSystem",
+    "DeliverySystem",
+    "DeliveryVAE",
+    "DeliveryGenerator",
 ]

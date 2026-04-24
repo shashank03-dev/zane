@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
 from .data import (
@@ -630,7 +631,9 @@ class DrugDiscoveryPipeline:
             result = adapter.simulate_ligand(smiles)
         return result.as_dict()
 
-    def load_pistachio_reactions(self, dataset_path: str, limit: int = 1000, filter_drug_like: bool = False) -> dict[str, Any]:
+    def load_pistachio_reactions(
+        self, dataset_path: str, limit: int = 1000, filter_drug_like: bool = False
+    ) -> dict[str, Any]:
         """Load reaction data from a Pistachio dataset file.
 
         Args:
@@ -644,3 +647,55 @@ class DrugDiscoveryPipeline:
         loader = PistachioDatasets(limit=limit, filter_drug_like=filter_drug_like)
         result = loader.load(dataset_path)
         return result.as_dict()
+
+    # ------------------------------------------------------------------
+    # Modules 7-10: KG, RAG, Delivery, Federated, Trials
+    # ------------------------------------------------------------------
+
+    def ingest_kg(self, df: pd.DataFrame, node_type: str):
+        """Parallelized ingestion into the Causal Knowledge Graph."""
+        from .knowledge_graph import KGIngestor
+
+        ingestor = KGIngestor()
+        ingestor.parallel_ingest_nodes(df, node_type)
+
+    def ask_intelligence(self, query: str, context_docs: list[str] | None = None) -> str:
+        """Use RAG engine to answer biomedical research queries."""
+        from .intelligence import RAGEngine
+
+        engine = RAGEngine()
+        if context_docs:
+            engine.initialize_qa(context_docs)
+        return engine.ask(query)
+
+    def generate_delivery_system(self, system_type: str = "LNP", **kwargs) -> Any:
+        """Generate a novel drug delivery system (LNP or Polymer)."""
+        from .drugmaking import LNP, DeliveryGenerator, PolymericSystem
+
+        generator = DeliveryGenerator()
+        composition = generator.generate(num_samples=1)[0].cpu().numpy()
+
+        if system_type == "LNP":
+            return LNP(
+                name="GenLNP",
+                ionizable_lipid=composition[0],
+                helper_lipid=composition[1],
+                cholesterol=composition[2],
+                peg_lipid=composition[3],
+            )
+        else:
+            return PolymericSystem(name="GenPoly", polymers={"P1": composition[0]}, crosslinker_ratio=0.1)
+
+    def run_federated_training(self, server_address: str = "0.0.0.0:8080", rounds: int = 3):
+        """Orchestrate federated learning across nodes."""
+        from .training import FederatedServer
+
+        server = FederatedServer(num_rounds=rounds)
+        server.start_server(server_address)
+
+    def simulate_clinical_trial(self, drug_name: str, num_patients: int = 1000) -> dict[str, Any]:
+        """Run an in silico Phase 3 clinical trial simulation."""
+        from .simulation import ClinicalTrialSimulator
+
+        simulator = ClinicalTrialSimulator()
+        return simulator.simulate_phase3(drug_name, num_patients=num_patients)

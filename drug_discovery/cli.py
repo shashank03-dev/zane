@@ -191,7 +191,9 @@ def main():
         ],
         help="BoltzGen protocol to use",
     )
-    boltzgen_parser.add_argument("--num-designs", type=int, default=50, help="Number of intermediate designs to generate")
+    boltzgen_parser.add_argument(
+        "--num-designs", type=int, default=50, help="Number of intermediate designs to generate"
+    )
     boltzgen_parser.add_argument("--budget", type=int, default=10, help="Final number of designs after filtering")
     boltzgen_parser.add_argument("--steps", nargs="+", default=None, help="Optional subset of BoltzGen steps to run")
     boltzgen_parser.add_argument("--devices", type=int, default=None, help="Number of devices to request")
@@ -320,7 +322,28 @@ def main():
     strategy_parser.add_argument("--min-qed", type=float, default=0.45, help="Minimum acceptable QED.")
     strategy_parser.add_argument("--max-logp", type=float, default=4.5, help="Maximum acceptable logP.")
     strategy_parser.add_argument("--max-mw", type=float, default=550.0, help="Maximum acceptable molecular weight.")
-    strategy_parser.add_argument("--max-sa", type=float, default=6.0, help="Maximum acceptable synthetic accessibility score.")
+    strategy_parser.add_argument(
+        "--max-sa", type=float, default=6.0, help="Maximum acceptable synthetic accessibility score."
+    )
+
+    # KG Ingest command
+    kg_parser = subparsers.add_parser("kg-ingest", help="Ingest data into Knowledge Graph")
+    kg_parser.add_argument("csv_path", help="Path to CSV file with node data")
+    kg_parser.add_argument("--node-type", default="Molecule", help="Label for nodes")
+
+    # Generate Delivery command
+    delivery_parser = subparsers.add_parser("generate-delivery", help="Generate delivery system")
+    delivery_parser.add_argument("--type", default="LNP", choices=["LNP", "Polymer"])
+
+    # Federated Train command
+    federated_parser = subparsers.add_parser("federated-train", help="Start federated learning server")
+    federated_parser.add_argument("--rounds", type=int, default=3)
+    federated_parser.add_argument("--min-clients", type=int, default=2)
+
+    # Simulate Trial command
+    trial_parser = subparsers.add_parser("simulate-trial", help="Simulate Phase 3 clinical trial")
+    trial_parser.add_argument("drug_name", help="Name of the drug candidate")
+    trial_parser.add_argument("--patients", type=int, default=1000)
 
     args = parser.parse_args()
 
@@ -352,6 +375,14 @@ def main():
         run_elite_pipeline(args)
     elif args.command == "strategy-plan":
         run_strategy_plan(args)
+    elif args.command == "kg-ingest":
+        run_kg_ingest(args)
+    elif args.command == "generate-delivery":
+        run_generate_delivery(args)
+    elif args.command == "federated-train":
+        run_federated_train(args)
+    elif args.command == "simulate-trial":
+        run_simulate_trial(args)
     else:
         parser.print_help()
 
@@ -474,9 +505,7 @@ def show_dashboard(args):
         need = input("What drug need/disease are you exploring? [cold cough congestion]: ").strip()
         query = need or "cold cough congestion"
 
-        filt = input(
-            "How should candidates be sorted? [safest combinations with minimal side effects]: "
-        ).strip()
+        filt = input("How should candidates be sorted? [safest combinations with minimal side effects]: ").strip()
         filter_query = filt or "safest combinations with minimal side effects"
 
         live_answer = input("Run live dashboard updates? [Y/n]: ").strip().lower()
@@ -494,9 +523,7 @@ def show_dashboard(args):
         cerebras_answer = input("Enable Cerebras API guidance? [Y/n]: ").strip().lower()
         cerebras = cerebras_answer not in {"n", "no"}
 
-        custom_characteristics = input(
-            "Custom compound characteristics (optional, simulation-only) []: "
-        ).strip()
+        custom_characteristics = input("Custom compound characteristics (optional, simulation-only) []: ").strip()
         custom_count_raw = input("How many custom compounds to generate? [4]: ").strip()
         custom_count = 4
         if custom_count_raw:
@@ -505,9 +532,7 @@ def show_dashboard(args):
             except ValueError:
                 custom_count = 4
 
-        detail_raw = input(
-            "Detail panels to show (combinations/composition/analytics/ai/all) [none]: "
-        ).strip()
+        detail_raw = input("Detail panels to show (combinations/composition/analytics/ai/all) [none]: ").strip()
         detail_sections = {part.strip().lower() for part in detail_raw.split() if part.strip()}
         valid_sections = {"combinations", "composition", "analytics", "ai", "all"}
         detail_sections = {item for item in detail_sections if item in valid_sections}
@@ -641,8 +666,8 @@ def run_boltzgen(args):
 def run_generation(args):
     """Generate molecules using optional backends."""
     from drug_discovery.generation.backends import (
-        GT4SDBackend,
         GenerationManager,
+        GT4SDBackend,
         MolecularDesignBackend,
         MolformerBackend,
         ReinventBackend,
@@ -736,6 +761,47 @@ def run_strategy_plan(args):
     )
     engine = ProgramStrategyEngine(tpp=tpp)
     result = engine.evaluate_candidates(smiles_list=list(args.smiles), top_k=max(1, int(args.top_k)))
+    print(json.dumps(result, indent=2))
+
+
+def run_kg_ingest(args):
+    """Ingest data into Knowledge Graph."""
+    import pandas as pd
+
+    from drug_discovery.knowledge_graph import KGIngestor
+
+    print(f"Ingesting {args.csv_path} as {args.node_type}...")
+    df = pd.read_csv(args.csv_path)
+    ingestor = KGIngestor()
+    ingestor.parallel_ingest_nodes(df, args.node_type)
+
+
+def run_generate_delivery(args):
+    """Generate delivery system."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    system = pipeline.generate_delivery_system(system_type=args.type)
+    print(f"\nGenerated {args.type} Delivery System:")
+    print(f"  Name: {system.name}")
+    print(f"  Components: {system.components}")
+
+
+def run_federated_train(args):
+    """Start federated learning server."""
+    from drug_discovery.training import FederatedServer
+
+    server = FederatedServer(min_clients=args.min_clients, num_rounds=args.rounds)
+    server.start_server()
+
+
+def run_simulate_trial(args):
+    """Simulate Phase 3 clinical trial."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    result = pipeline.simulate_clinical_trial(args.drug_name, num_patients=args.patients)
+    print("\nClinical Trial Simulation Result:")
     print(json.dumps(result, indent=2))
 
 

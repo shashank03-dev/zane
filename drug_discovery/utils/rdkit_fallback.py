@@ -11,20 +11,19 @@ from __future__ import annotations
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 try:  # pragma: no cover - exercised indirectly when RDKit is installed
     from rdkit import Chem  # type: ignore
-    from rdkit.Chem import Crippen, Descriptors, rdMolDescriptors  # type: ignore
+    from rdkit.Chem import Crippen, Descriptors, rd_mol_descriptors  # type: ignore
 
     HAS_RDKIT = True
 except Exception:  # pragma: no cover - default path in constrained environments
     Chem = None
     Crippen = None
     Descriptors = None
-    rdMolDescriptors = None
+    rd_mol_descriptors = None
     HAS_RDKIT = False
 
 
@@ -73,16 +72,7 @@ def heuristic_props(smiles: str) -> HeuristicProperties:
     i = _count_token(s, "I")
 
     # Crude molecular weight estimate
-    weight = (
-        12.0 * c
-        + 14.0 * n
-        + 16.0 * o
-        + 32.0 * s_count
-        + 19.0 * f
-        + 35.5 * cl
-        + 79.9 * br
-        + 126.9 * i
-    )
+    weight = 12.0 * c + 14.0 * n + 16.0 * o + 32.0 * s_count + 19.0 * f + 35.5 * cl + 79.9 * br + 126.9 * i
     if weight <= 0:
         weight = 5.0 * length + 50.0
 
@@ -117,10 +107,10 @@ def is_smiles_plausible(smiles: str) -> bool:
 
 def rdkit_or_none():
     """Return RDKit modules when available."""
-    return Chem, Descriptors, Crippen, rdMolDescriptors
+    return Chem, Descriptors, Crippen, rd_mol_descriptors
 
 
-def get_props_with_rdkit(smiles: str) -> Optional[HeuristicProperties]:
+def get_props_with_rdkit(smiles: str) -> HeuristicProperties | None:
     """Use RDKit when available, otherwise heuristics."""
     if HAS_RDKIT and Chem and Descriptors and Crippen:
         try:

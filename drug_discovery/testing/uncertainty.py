@@ -10,10 +10,11 @@ Implements multiple uncertainty quantification methods:
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Callable, Tuple
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.calibration import calibration_curve
 
 logger = logging.getLogger(__name__)
@@ -34,8 +35,8 @@ class UncertaintyEstimator:
 
     def estimate_ensemble_uncertainty(
         self,
-        predictions: List[float],
-    ) -> Dict[str, float]:
+        predictions: list[float],
+    ) -> dict[str, float]:
         """
         Estimate uncertainty from ensemble predictions.
 
@@ -67,7 +68,7 @@ class UncertaintyEstimator:
     def estimate_bayesian_uncertainty(
         self,
         posterior_samples: np.ndarray,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Estimate uncertainty from Bayesian posterior samples.
 
@@ -102,7 +103,7 @@ class UncertaintyEstimator:
         self,
         predictions: np.ndarray,
         true_labels: np.ndarray,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Calibrate probability predictions using isotonic regression or sigmoid.
 
@@ -128,15 +129,15 @@ class UncertaintyEstimator:
         )
 
         # Reshape for sklearn
-        X_dummy = np.zeros((len(predictions), 1))
-        calibrated_clf.fit(X_dummy, true_labels)
+        x_dummy = np.zeros((len(predictions), 1))
+        calibrated_clf.fit(x_dummy, true_labels)
 
         # Compute calibration curve
         fraction_of_positives, mean_predicted_value = calibration_curve(
             true_labels,
             predictions,
             n_bins=10,
-            strategy='uniform',
+            strategy="uniform",
         )
 
         results = {
@@ -162,7 +163,7 @@ class UncertaintyEstimator:
         calibration_scores: np.ndarray,
         test_score: float,
         confidence_level: float = 0.95,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Compute conformal prediction interval.
 
@@ -200,7 +201,7 @@ class UncertaintyEstimator:
         input_data: np.ndarray,
         n_iterations: int = 100,
         dropout_rate: float = 0.5,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Estimate uncertainty using Monte Carlo dropout.
 
@@ -252,7 +253,7 @@ class UncertaintyEstimator:
     def evidential_uncertainty(
         self,
         alpha: np.ndarray,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Compute uncertainty from evidential neural network outputs.
 
@@ -266,34 +267,36 @@ class UncertaintyEstimator:
             Dictionary with uncertainty decomposition
         """
         # Total evidence
-        S = np.sum(alpha)
+        s_total = np.sum(alpha)
 
         # Expected probability
-        prob = alpha / S
+        prob = alpha / s_total
 
         # Aleatoric uncertainty (data uncertainty)
-        aleatoric = prob * (1 - prob) / (S + 1)
+        aleatoric = prob * (1 - prob) / (s_total + 1)
 
         # Epistemic uncertainty (model uncertainty)
-        epistemic = prob * (1 - prob) / (S + 1) * (1 / S)
+        epistemic = prob * (1 - prob) / (s_total + 1) * (1 / s_total)
 
         results = {
             "predicted_probability": prob.tolist() if isinstance(prob, np.ndarray) else float(prob),
-            "total_evidence": float(S),
+            "total_evidence": float(s_total),
             "aleatoric_uncertainty": aleatoric.tolist() if isinstance(aleatoric, np.ndarray) else float(aleatoric),
             "epistemic_uncertainty": epistemic.tolist() if isinstance(epistemic, np.ndarray) else float(epistemic),
         }
 
         # Total uncertainty
         total_uncertainty = aleatoric + epistemic
-        results["total_uncertainty"] = total_uncertainty.tolist() if isinstance(total_uncertainty, np.ndarray) else float(total_uncertainty)
+        results["total_uncertainty"] = (
+            total_uncertainty.tolist() if isinstance(total_uncertainty, np.ndarray) else float(total_uncertainty)
+        )
 
         return results
 
     def uncertainty_decomposition(
         self,
-        ensemble_predictions: List[np.ndarray],
-    ) -> Dict[str, float]:
+        ensemble_predictions: list[np.ndarray],
+    ) -> dict[str, float]:
         """
         Decompose uncertainty into aleatoric and epistemic components.
 
@@ -365,8 +368,8 @@ class UncertaintyEstimator:
 
     def batch_uncertainty_estimation(
         self,
-        ensemble_models: List[Callable],
-        smiles_list: List[str],
+        ensemble_models: list[Callable],
+        smiles_list: list[str],
     ) -> pd.DataFrame:
         """
         Estimate uncertainty for batch of molecules using ensemble.

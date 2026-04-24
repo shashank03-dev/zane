@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -133,9 +133,8 @@ class LocalSimulator(QuantumSimulator):
         self.n_qubits = n_qubits
         self.circuit = []
 
-        dtype = np.float32 if self.precision == "float32" else np.float64
         # Initial state |0...0>
-        self._state = np.zeros(2 ** n_qubits, dtype=complex)
+        self._state = np.zeros(2**n_qubits, dtype=complex)
         self._state[0] = 1.0 + 0j
 
     def add_gate(
@@ -145,15 +144,17 @@ class LocalSimulator(QuantumSimulator):
         parameters: dict[str, Any] | None = None,
     ) -> None:
         """Add a gate to the circuit."""
-        self.circuit.append({
-            "gate": gate_name,
-            "qubits": qubits,
-            "parameters": parameters or {},
-        })
+        self.circuit.append(
+            {
+                "gate": gate_name,
+                "qubits": qubits,
+                "parameters": parameters or {},
+            }
+        )
 
     def _apply_single_gate(self, gate: np.ndarray, qubit: int) -> None:
         """Apply single-qubit gate to state."""
-        n = 2 ** self.n_qubits
+        n = 2**self.n_qubits
         new_state = np.zeros(n, dtype=complex)
 
         for i in range(n):
@@ -175,7 +176,7 @@ class LocalSimulator(QuantumSimulator):
 
     def _apply_cnot(self, control: int, target: int) -> None:
         """Apply CNOT gate."""
-        n = 2 ** self.n_qubits
+        n = 2**self.n_qubits
         new_state = np.zeros(n, dtype=complex)
 
         for i in range(n):
@@ -212,20 +213,16 @@ class LocalSimulator(QuantumSimulator):
             elif gate_name in ["RX", "RY", "RZ"]:
                 theta = params.get("theta", 0)
                 if gate_name == "RX":
-                    mat = np.array([
-                        [np.cos(theta/2), -1j*np.sin(theta/2)],
-                        [-1j*np.sin(theta/2), np.cos(theta/2)]
-                    ], dtype=complex)
+                    mat = np.array(
+                        [[np.cos(theta / 2), -1j * np.sin(theta / 2)], [-1j * np.sin(theta / 2), np.cos(theta / 2)]],
+                        dtype=complex,
+                    )
                 elif gate_name == "RY":
-                    mat = np.array([
-                        [np.cos(theta/2), -np.sin(theta/2)],
-                        [np.sin(theta/2), np.cos(theta/2)]
-                    ], dtype=complex)
+                    mat = np.array(
+                        [[np.cos(theta / 2), -np.sin(theta / 2)], [np.sin(theta / 2), np.cos(theta / 2)]], dtype=complex
+                    )
                 else:  # RZ
-                    mat = np.array([
-                        [np.exp(-1j*theta/2), 0],
-                        [0, np.exp(1j*theta/2)]
-                    ], dtype=complex)
+                    mat = np.array([[np.exp(-1j * theta / 2), 0], [0, np.exp(1j * theta / 2)]], dtype=complex)
                 self._apply_single_gate(mat, qubits[0])
 
         return self._state
@@ -233,6 +230,7 @@ class LocalSimulator(QuantumSimulator):
     def measure(self, observable: str, n_shots: int = 1000) -> QuantumResult:
         """Measure observable."""
         import time
+
         start = time.time()
 
         # Execute circuit
@@ -246,7 +244,6 @@ class LocalSimulator(QuantumSimulator):
             probs = np.abs(state) ** 2
 
             # Z^i expectation
-            n_z = observable.count("Z")
             for i, char in enumerate(reversed(observable)):
                 if char == "Z":
                     exp_z = 0.0
@@ -258,7 +255,7 @@ class LocalSimulator(QuantumSimulator):
             # Z^i Z^j expectation
             z_positions = [i for i, c in enumerate(reversed(observable)) if c == "Z"]
             for i, pos_i in enumerate(z_positions):
-                for pos_j in z_positions[i+1:]:
+                for pos_j in z_positions[i + 1 :]:
                     exp_zz = 0.0
                     for j, p in enumerate(probs):
                         bit_i = (j >> pos_i) & 1
@@ -326,6 +323,7 @@ class AWSBraketDriver(QuantumSimulator):
         try:
             from braket.aws import AwsDevice
             from braket.devices import LocalSimulator as BraketLocal
+
             self._available = True
             self._AwsDevice = AwsDevice
             self._LocalSimulator = BraketLocal
@@ -340,6 +338,7 @@ class AWSBraketDriver(QuantumSimulator):
             raise RuntimeError("AWS Braket not installed")
 
         from braket.circuits import Circuit
+
         self._circuit = Circuit()
         self.n_qubits = n_qubits
         return self._circuit
@@ -354,7 +353,7 @@ class AWSBraketDriver(QuantumSimulator):
         if not self._available:
             raise RuntimeError("AWS Braket not installed")
 
-        from braket.circuits import Gate, AngledGate
+        from braket.circuits import AngledGate, Gate
 
         gate_map = {
             "H": Gate.H,
@@ -377,6 +376,7 @@ class AWSBraketDriver(QuantumSimulator):
             return QuantumResult(success=False, error="AWS Braket not installed")
 
         import time
+
         start = time.time()
 
         try:
@@ -389,7 +389,6 @@ class AWSBraketDriver(QuantumSimulator):
             result = task.result()
 
             # Extract expectation values
-            measurements = result.measurements
             counts = result.measurement_counts
 
             expectation_values = {}
@@ -527,7 +526,7 @@ class QuantumDriver:
         backends = ["local"]
 
         try:
-            import boto3
+
             backends.append("aws_braket")
         except ImportError:
             pass

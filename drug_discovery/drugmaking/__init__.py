@@ -1,39 +1,37 @@
-"""
-Custom Drugmaking Process Module for ZANE.
-
-This module provides end-to-end drug design capabilities:
-- Generation of novel compounds from scratch
-- Effectiveness and toxicity testing
-- Multi-objective optimization to balance success and safety
-- Counter-substance finder for risk mitigation
-
-Example usage::
-
-    from drug_discovery.drugmaking import CustomDrugmakingModule, CounterSubstanceFinder
-
-    # Create the drugmaking module
-    module = CustomDrugmakingModule()
-
-    # Run end-to-end optimization
-    result = module.run_end_to_end(target_objectives=["potency", "safety"])
-
-    # Find counter-substances for risk mitigation
-    finder = CounterSubstanceFinder()
-    counter_substances = finder.find_counter_substances(drug_smiles="CCO")
-"""
+"""Custom Drugmaking Process Module for ZANE."""
 
 from __future__ import annotations
 
 from drug_discovery.drugmaking.process import (
-    CandidateResult,
-    CompoundTestResult,
-    CustomDrugmakingModule,
-    OptimizationConfig,
+    CandidateResult as CandidateResult,
+)
+from drug_discovery.drugmaking.process import (
+    CompoundTestResult as CompoundTestResult,
+)
+from drug_discovery.drugmaking.process import (
+    CustomDrugmakingModule as CustomDrugmakingModule,
+)
+from drug_discovery.drugmaking.process import (
+    OptimizationConfig as OptimizationConfig,
 )
 from drug_discovery.drugmaking.risk_mitigation import (
-    CounterSubstanceFinder,
-    CounterSubstanceResult,
+    CounterSubstanceFinder as CounterSubstanceFinder,
 )
+from drug_discovery.drugmaking.risk_mitigation import (
+    CounterSubstanceResult as CounterSubstanceResult,
+)
+
+from .delivery_systems import (
+    LNP as LNP,
+)
+from .delivery_systems import (
+    DeliverySystem as DeliverySystem,
+)
+from .delivery_systems import (
+    PolymericSystem as PolymericSystem,
+)
+from .vae_generator import DeliveryGenerator as DeliveryGenerator
+from .vae_generator import DeliveryVAE as DeliveryVAE
 
 __all__ = [
     "CustomDrugmakingModule",
@@ -42,4 +40,9 @@ __all__ = [
     "OptimizationConfig",
     "CounterSubstanceFinder",
     "CounterSubstanceResult",
+    "LNP",
+    "PolymericSystem",
+    "DeliverySystem",
+    "DeliveryVAE",
+    "DeliveryGenerator",
 ]

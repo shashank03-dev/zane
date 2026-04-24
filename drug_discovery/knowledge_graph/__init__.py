@@ -1,22 +1,29 @@
-"""
-Knowledge Graph for Drug Discovery
+"""Knowledge Graph for Drug Discovery."""
 
-Stores and queries relationships between molecules, proteins, diseases with:
-- Structured graph storage (nodes and edges)
-- Vector database integration for semantic search
-- Hybrid retrieval combining graph structure and embeddings
-- Multi-hop reasoning and path finding
-"""
-
-from .graph import DrugKnowledgeGraph, KnowledgeGraphBuilder
+from .graph import DrugKnowledgeGraph as DrugKnowledgeGraph
+from .graph import KnowledgeGraphBuilder as KnowledgeGraphBuilder
+from .ingestion import KGIngestor as KGIngestor
 from .knowledge_graph import (
-    KnowledgeGraph,
-    VectorDatabase,
-    KGNode,
-    KGEdge,
-    NodeType,
-    EdgeType,
+    EdgeType as EdgeType,
 )
+from .knowledge_graph import (
+    KGEdge as KGEdge,
+)
+from .knowledge_graph import (
+    KGNode as KGNode,
+)
+from .knowledge_graph import (
+    KnowledgeGraph as KnowledgeGraph,
+)
+from .knowledge_graph import (
+    NodeType as NodeType,
+)
+from .knowledge_graph import (
+    VectorDatabase as VectorDatabase,
+)
+from .link_prediction import LinkPredictionService as LinkPredictionService
+from .link_prediction import LinkPredictorGNN as LinkPredictorGNN
+from .neo4j_adapter import Neo4jAdapter as Neo4jAdapter
 
 __all__ = [
     "DrugKnowledgeGraph",
@@ -27,4 +34,8 @@ __all__ = [
     "KGEdge",
     "NodeType",
     "EdgeType",
+    "Neo4jAdapter",
+    "LinkPredictorGNN",
+    "LinkPredictionService",
+    "KGIngestor",
 ]

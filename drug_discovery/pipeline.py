@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.data import DataLoader
+
 from torch_geometric.loader import DataLoader as GeometricDataLoader
 
 from .data import (
@@ -282,16 +283,16 @@ class DrugDiscoveryPipeline:
         print("\n✓ Training complete!")
         return history
 
-    def predict_properties(self, smiles: str, include_admet: bool = True) -> dict:
+    def predict_properties(self, smiles: str, include_admet: bool = True) -> dict[str, Any]:
         """
-        Predict properties for a molecule
+        Predict properties for a molecule using the trained internal model.
 
         Args:
-            smiles: SMILES string
-            include_admet: Whether to include ADMET predictions
+            smiles: SMILES string of the candidate.
+            include_admet: Whether to include auxiliary ADMET predictions.
 
         Returns:
-            Dictionary of predicted properties
+            Dictionary containing predicted properties and metadata.
         """
         if self.property_predictor is None:
             raise RuntimeError("Model not trained yet. Call train() first.")
@@ -330,7 +331,10 @@ class DrugDiscoveryPipeline:
         return results
 
     def generate_candidates(
-        self, target_protein: str | None = None, num_candidates: int = 10, filter_criteria: dict | None = None
+        self,
+        target_protein: str | None = None,
+        num_candidates: int = 10,
+        filter_criteria: dict[str, Any] | None = None,
     ) -> pd.DataFrame:
         """
         Generate drug candidate molecules
@@ -630,7 +634,9 @@ class DrugDiscoveryPipeline:
             result = adapter.simulate_ligand(smiles)
         return result.as_dict()
 
-    def load_pistachio_reactions(self, dataset_path: str, limit: int = 1000, filter_drug_like: bool = False) -> dict[str, Any]:
+    def load_pistachio_reactions(
+        self, dataset_path: str, limit: int = 1000, filter_drug_like: bool = False
+    ) -> dict[str, Any]:
         """Load reaction data from a Pistachio dataset file.
 
         Args:
@@ -644,3 +650,154 @@ class DrugDiscoveryPipeline:
         loader = PistachioDatasets(limit=limit, filter_drug_like=filter_drug_like)
         result = loader.load(dataset_path)
         return result.as_dict()
+
+    # ------------------------------------------------------------------
+    # Modules 7-10: KG, RAG, Delivery, Federated, Trials
+    # ------------------------------------------------------------------
+
+    def ingest_kg(self, df: pd.DataFrame, node_type: str):
+        """Parallelized ingestion into the Causal Knowledge Graph."""
+        from .knowledge_graph import KGIngestor
+
+        ingestor = KGIngestor()
+        ingestor.parallel_ingest_nodes(df, node_type)
+
+    def ask_intelligence(self, query: str, context_docs: list[str] | None = None) -> str:
+        """Use RAG engine to answer biomedical research queries."""
+        from .intelligence import RAGEngine
+
+        engine = RAGEngine()
+        if context_docs:
+            engine.initialize_qa(context_docs)
+        return engine.ask(query)
+
+    def generate_delivery_system(self, system_type: str = "LNP", **kwargs) -> Any:
+        """Generate a novel drug delivery system (LNP or Polymer)."""
+        from .drugmaking import LNP, DeliveryGenerator, PolymericSystem
+
+        generator = DeliveryGenerator()
+        composition = generator.generate(num_samples=1)[0].cpu().numpy()
+
+        if system_type == "LNP":
+            return LNP(
+                name="GenLNP",
+                ionizable_lipid=composition[0],
+                helper_lipid=composition[1],
+                cholesterol=composition[2],
+                peg_lipid=composition[3],
+            )
+        else:
+            return PolymericSystem(name="GenPoly", polymers={"P1": composition[0]}, crosslinker_ratio=0.1)
+
+    def run_federated_training(self, server_address: str = "0.0.0.0:8080", rounds: int = 3):
+        """Orchestrate federated learning across nodes."""
+        from .training import FederatedServer
+
+        server = FederatedServer(num_rounds=rounds)
+        server.start_server(server_address)
+
+    def simulate_clinical_trial(self, drug_name: str, num_patients: int = 1000) -> dict[str, Any]:
+        """Run an in silico Phase 3 clinical trial simulation."""
+        from .simulation import ClinicalTrialSimulator
+
+        simulator = ClinicalTrialSimulator()
+        return simulator.simulate_phase3(drug_name, num_patients=num_patients)
+
+    # ------------------------------------------------------------------
+    # Modules 11-14: Space, Neuromorphic, Quantum QED, Agentic
+    # ------------------------------------------------------------------
+
+    def simulate_microgravity(self, duration: float = 3600.0) -> dict[str, Any]:
+        """Simulate protein crystallization in microgravity (Module 11)."""
+        from .simulation import MicrogravitySimulator
+
+        simulator = MicrogravitySimulator(device=self.device)
+        return simulator.simulate_crystallization(geometry={}, initial_concentration=0.5, duration=duration)
+
+    def compile_neuromorphic(self, model: torch.nn.Module) -> Any:
+        """Compile a biological model for neuromorphic hardware (Module 12)."""
+        from .neuromorphic import SNNCompiler
+
+        compiler = SNNCompiler()
+        return compiler.convert_to_spiking(model)
+
+    def run_qed_sandbox(self, smiles: str) -> dict[str, Any]:
+        """Run relativistic sub-atomic QED simulation (Module 13)."""
+        from .quantum_chemistry import QEDSandbox
+
+        sandbox = QEDSandbox()
+        return sandbox.analyze_relativistic_toxicity(smiles)
+
+    async def run_apex_orchestration(self, drug_name: str):
+        """Execute complex asynchronous workflow via Apex (Module 11-14)."""
+        from .apex_orchestrator import ApexOrchestrator
+
+        orchestrator = ApexOrchestrator()
+        return await orchestrator.run_comprehensive_workflow({"name": drug_name})
+
+    def generate_ind_package(self, drug_name: str) -> str:
+        """Generate agentic FDA IND application package (Module 14)."""
+        from .agentic import INDGenerator
+
+        generator = INDGenerator(kg_interface=None)
+        return generator.generate_application({"name": drug_name}, citation_ids=["cit_1", "cit_2"])
+
+    # ------------------------------------------------------------------
+    # Modules 15-18: Xenobiology, Chronobiology, Nanobotics, Meta-Learning
+    # ------------------------------------------------------------------
+
+    def design_xenoprotein(self) -> dict[str, Any]:
+        """Design a protein with an expanded synthetic alphabet (Module 15)."""
+        from .xenobiology import XenoProteinGenerator
+
+        generator = XenoProteinGenerator()
+        return generator.design_xenoprotein()
+
+    def simulate_aging(self, drug_name: str) -> dict[str, Any]:
+        """Simulate long-term epigenetic effects over human lifespan (Module 16)."""
+        from .chronobiology import EpigeneticAgingEngine
+
+        engine = EpigeneticAgingEngine()
+        return engine.simulate_lifespan_impact({"name": drug_name})
+
+    def train_nanobot_swarm(self) -> dict[str, Any]:
+        """Train programmable nanobot swarm intelligence (Module 17)."""
+        from .nanobotics import NanobotMARL
+
+        marl = NanobotMARL()
+        return marl.train_swarm_intelligence({"tissue_type": "tumor"})
+
+    async def run_singularity_workflow(self, drug_name: str):
+        """Execute end-to-end singularity workflow (Module 1-18)."""
+        from .singularity_engine import SingularityEngine
+
+        engine = SingularityEngine()
+        return await engine.execute_singularity_workflow({"name": drug_name})
+
+    def run_omega_protocol(self, target_pathology: str) -> dict[str, Any]:
+        """Execute the final Tier 22 Omega Protocol (Modules 19-22)."""
+        from .omega_protocol import OmegaProtocol
+
+        protocol = OmegaProtocol()
+        return protocol.execute_omega_workflow(target_pathology)
+
+    async def run_full_stack_discovery(self, drug_name: str, target_pathology: str) -> dict[str, Any]:
+        """
+        Execute the full ZANE stack from Tier 1 to Tier 22.
+        Warning: This includes high-latency physics and existential-risk protocols.
+        """
+        print(f"\n=== INITIATING FULL-STACK DISCOVERY: {drug_name} vs {target_pathology} ===")
+
+        # Tier 1-18: Singularity Workflow
+        singularity_results = await self.run_singularity_workflow(drug_name)
+
+        # Tier 19-22: Omega Protocol
+        omega_results = self.run_omega_protocol(target_pathology)
+
+        return {
+            "drug_name": drug_name,
+            "target_pathology": target_pathology,
+            "singularity_layer": singularity_results,
+            "omega_layer": omega_results,
+            "final_recommendation": "PROCEED_TO_HOST_REFACTOR",
+        }

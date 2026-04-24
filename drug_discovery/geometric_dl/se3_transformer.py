@@ -12,8 +12,8 @@ References:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
-    import torch.nn.functional as F
+
     TORCH_AVAILABLE = True
 except ImportError:
     TORCH_AVAILABLE = False
@@ -33,7 +33,8 @@ except ImportError:
 try:
     import e3nn
     from e3nn import o3
-    from e3nn.nn import Gate, LayerNorm
+    from e3nn.nn import LayerNorm
+
     E3NN_AVAILABLE = True
 except ImportError:
     E3NN_AVAILABLE = False
@@ -212,7 +213,7 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
         Forward pass.
 
         Args:
-            x: Node features (N, hidden_dim).
+            x: Node features (n_nodes, hidden_dim).
             edge_index: Edge connectivity (2, num_edges).
             edge_distance: Edge distances (num_edges,).
 
@@ -222,12 +223,11 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
         src, dst = edge_index
 
         # Compute query, key, value
-        q = self.q_proj(x).view(-1, self.num_heads, self.head_dim)
-        k = self.k_proj(x).view(-1, self.num_heads, self.head_dim)
+        self.q_proj(x).view(-1, self.num_heads, self.head_dim)
         v = self.v_proj(x).view(-1, self.num_heads, self.head_dim)
 
         # Attention scores (using invariant distance features)
-        inv_features = self.inv_proj(x).squeeze(-1)  # (N,)
+        inv_features = self.inv_proj(x).squeeze(-1)  # (n_nodes,)
         inv_src = inv_features[src]
         inv_dst = inv_features[dst]
 
@@ -236,8 +236,8 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
 
         # Softmax over destination nodes
         num_nodes = x.shape[0]
-        max_scores = torch.zeros(num_nodes, device=x.device) - float('inf')
-        max_scores.scatter_reduce_(0, dst, attn_scores, reduce='amax')
+        max_scores = torch.zeros(num_nodes, device=x.device) - float("inf")
+        max_scores.scatter_reduce_(0, dst, attn_scores, reduce="amax")
 
         attn_scores = attn_scores - max_scores[dst]
         attn_weights = torch.exp(attn_scores)
@@ -246,7 +246,9 @@ class EquivariantAttention(nn.Module if TORCH_AVAILABLE else object):
         # Aggregate values
         aggr = torch.zeros(num_nodes, self.num_heads, self.head_dim, device=x.device)
         v_src = v[src]  # (num_edges, heads, head_dim)
-        aggr.scatter_add_(0, dst.unsqueeze(-1).unsqueeze(-1).expand_as(v_src), v_src * attn_weights.unsqueeze(-1).unsqueeze(-1))
+        aggr.scatter_add_(
+            0, dst.unsqueeze(-1).unsqueeze(-1).expand_as(v_src), v_src * attn_weights.unsqueeze(-1).unsqueeze(-1)
+        )
 
         # Normalize
         counts = torch.zeros(num_nodes, device=x.device)
@@ -353,8 +355,8 @@ class SE3Transformer(nn.Module if TORCH_AVAILABLE else object):
         Forward pass.
 
         Args:
-            atom_z: Atomic numbers (N,).
-            positions: Atomic positions (N, 3).
+            atom_z: Atomic numbers (n_nodes,).
+            positions: Atomic positions (n_nodes, 3).
             batch_idx: Batch indices for pooling.
 
         Returns:
@@ -410,7 +412,7 @@ class SE3Transformer(nn.Module if TORCH_AVAILABLE else object):
 
         # Angular encoding (simplified) - pool 3 coords to 1
         angles = positions / (r.clamp(min=1e-6) + 1e-6)
-        angle_pool = torch.mean(angles, dim=-1, keepdim=True)  # (N, 1)
+        angle_pool = torch.mean(angles, dim=-1, keepdim=True)  # (n_nodes, 1)
         angle_enc = self.pos_encoding(angle_pool)
 
         return torch.cat([r_enc, angle_enc], dim=-1)
@@ -420,7 +422,7 @@ class SE3Transformer(nn.Module if TORCH_AVAILABLE else object):
         if max_radius is None:
             max_radius = self.config.max_radius
 
-        N = positions.shape[0]
+        n_nodes = positions.shape[0]
 
         # Compute pairwise distances
         dists = torch.cdist(positions, positions)
@@ -429,8 +431,8 @@ class SE3Transformer(nn.Module if TORCH_AVAILABLE else object):
         edge_index = []
         edge_distance = []
 
-        for i in range(N):
-            for j in range(N):
+        for i in range(n_nodes):
+            for j in range(n_nodes):
                 if i != j and dists[i, j] < max_radius:
                     edge_index.append([i, j])
                     edge_distance.append(dists[i, j].item())
@@ -519,7 +521,7 @@ class TransientPocketPredictor:
         Predict transient pockets.
 
         Args:
-            protein_coords: Protein atom coordinates (N, 3).
+            protein_coords: Protein atom coordinates (n_nodes, 3).
             protein_indices: Atom indices for alpha carbons.
             threshold: Detection threshold.
 
@@ -542,7 +544,7 @@ class TransientPocketPredictor:
         pockets = []
 
         try:
-            from scipy.spatial import ConvexHull, Delaunay
+            from scipy.spatial import Delaunay
 
             # Compute Delaunay triangulation
             tri = Delaunay(coords)
@@ -555,12 +557,14 @@ class TransientPocketPredictor:
 
                     if volume > self.min_pocket_size:
                         center = tetrahedron.mean(axis=0)
-                        pockets.append({
-                            "center": center,
-                            "volume": volume,
-                            "atoms": simplex.tolist(),
-                            "score": volume / self.min_pocket_size,
-                        })
+                        pockets.append(
+                            {
+                                "center": center,
+                                "volume": volume,
+                                "atoms": simplex.tolist(),
+                                "score": volume / self.min_pocket_size,
+                            }
+                        )
 
         except Exception as e:
             logger.warning(f"Pocket prediction failed: {e}")

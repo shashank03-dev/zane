@@ -12,7 +12,7 @@ Simulates biological responses to drug candidates including:
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ADMEProperties:
     """ADME (Absorption, Distribution, Metabolism, Excretion) properties."""
+
     absorption: float  # Oral bioavailability (0-1)
     distribution: float  # Volume of distribution (L/kg)
     metabolism: float  # Metabolic stability (0-1)
@@ -45,6 +46,7 @@ class ADMEProperties:
 @dataclass
 class DoseResponse:
     """Dose-response relationship parameters."""
+
     ec50: float  # Half-maximal effective concentration
     emax: float  # Maximum effect
     hill_coefficient: float  # Hill coefficient (slope)
@@ -55,11 +57,12 @@ class DoseResponse:
 @dataclass
 class CellularResponse:
     """Cellular-level response to drug."""
+
     cell_viability: float  # 0-1
     proliferation_rate: float  # Relative to control
     apoptosis_rate: float  # 0-1
-    gene_expression_changes: Dict[str, float]  # Gene -> fold-change
-    pathway_activation: Dict[str, float]  # Pathway -> activation score
+    gene_expression_changes: dict[str, float]  # Gene -> fold-change
+    pathway_activation: dict[str, float]  # Pathway -> activation score
 
 
 class ADMEPredictor:
@@ -69,7 +72,7 @@ class ADMEPredictor:
         """Initialize ADME predictor."""
         pass
 
-    def predict_adme(self, smiles: str) -> Optional[ADMEProperties]:
+    def predict_adme(self, smiles: str) -> ADMEProperties | None:
         """
         Predict ADME properties from SMILES.
 
@@ -146,7 +149,7 @@ class ADMEPredictor:
             logger.error(f"ADME prediction failed for {smiles}: {e}")
             return None
 
-    def check_drug_likeness(self, smiles: str) -> Dict[str, Any]:
+    def check_drug_likeness(self, smiles: str) -> dict[str, Any]:
         """
         Check drug-likeness rules.
 
@@ -166,7 +169,6 @@ class ADMEPredictor:
                 mol = Chem.MolFromSmiles(smiles)
                 if mol is None:
                     return {"drug_like": False, "violations": ["Invalid SMILES"]}
-                mol_weight = Descriptors.MolWt(mol)
                 logp = Crippen.MolLogP(mol)
                 num_hbd = Descriptors.NumHDonors(mol)
                 num_hba = Descriptors.NumHAcceptors(mol)
@@ -229,7 +231,7 @@ class DoseResponseSimulator:
         ec50: float,
         emax: float = 1.0,
         hill_coefficient: float = 1.0,
-        dose_range: Optional[Tuple[float, float]] = None,
+        dose_range: tuple[float, float] | None = None,
         n_points: int = 50,
     ) -> DoseResponse:
         """
@@ -257,9 +259,7 @@ class DoseResponseSimulator:
         )
 
         # Hill equation: E = Emax * [D]^n / (EC50^n + [D]^n)
-        responses = emax * (doses ** hill_coefficient) / (
-            ec50 ** hill_coefficient + doses ** hill_coefficient
-        )
+        responses = emax * (doses**hill_coefficient) / (ec50**hill_coefficient + doses**hill_coefficient)
 
         return DoseResponse(
             ec50=ec50,
@@ -292,7 +292,7 @@ class DoseResponseSimulator:
         self,
         efficacy_ec50: float,
         toxicity_ec50: float,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Compute therapeutic window (safety margin).
 
@@ -340,7 +340,7 @@ class CellularResponseSimulator:
         smiles: str,
         dose: float,
         treatment_time: float = 24.0,
-    ) -> Optional[CellularResponse]:
+    ) -> CellularResponse | None:
         """
         Simulate cellular response to drug treatment.
 
@@ -360,7 +360,6 @@ class CellularResponseSimulator:
 
             # Simplified simulation based on molecular properties
             logp = Crippen.MolLogP(mol)
-            mol_weight = Descriptors.MolWt(mol)
 
             # Cell viability (decreases with dose and lipophilicity)
             toxicity_factor = max(0.0, (logp / 5.0) * (dose / 10.0))
@@ -414,7 +413,7 @@ class BiologicalResponseSimulator:
         smiles: str,
         initial_dose: float = 10.0,
         treatment_duration: float = 24.0,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Simulate complete biological response.
 
@@ -489,7 +488,7 @@ class BiologicalResponseSimulator:
 
     def batch_simulate(
         self,
-        smiles_list: List[str],
+        smiles_list: list[str],
         dose: float = 10.0,
     ) -> pd.DataFrame:
         """

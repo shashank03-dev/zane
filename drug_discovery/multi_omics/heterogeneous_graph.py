@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -23,9 +23,9 @@ logger = logging.getLogger(__name__)
 try:
     import torch
     import torch.nn as nn
-    import torch.nn.functional as F
+
     from torch_geometric.data import HeteroData
-    from torch_geometric.nn import HeteroConv, GATConv, SAGEConv
+
     TORCH_GEOMETRIC_AVAILABLE = True
 except ImportError:
     TORCH_GEOMETRIC_AVAILABLE = False
@@ -171,12 +171,8 @@ class HeterogeneousGraph:
         self.edges: list[GraphEdge] = []
 
         # Node/edge type indices
-        self.node_type_index: dict[NodeType, list[str]] = {
-            nt: [] for nt in NodeType
-        }
-        self.edge_type_index: dict[EdgeType, list[tuple[str, str]]] = {
-            et: [] for et in EdgeType
-        }
+        self.node_type_index: dict[NodeType, list[str]] = {nt: [] for nt in NodeType}
+        self.edge_type_index: dict[EdgeType, list[tuple[str, str]]] = {et: [] for et in EdgeType}
 
         logger.info(f"HeterogeneousGraph initialized: feature_dim={node_feature_dim}")
 
@@ -318,9 +314,7 @@ class HeterogeneousGraph:
                 node = self.nodes[node_id]
                 features.append(node.features)
 
-            data[type_str].x = torch.tensor(
-                np.stack(features), dtype=torch.float32
-            )
+            data[type_str].x = torch.tensor(np.stack(features), dtype=torch.float32)
 
         # Add edges for each relation
         for edge_type, edges in self.edge_type_index.items():
@@ -342,9 +336,7 @@ class HeterogeneousGraph:
                         edge_weights.append(edge.weight)
 
             data[source_type, edge_type.value, target_type].edge_index = edge_index
-            data[source_type, edge_type.value, target_type].edge_attr = torch.tensor(
-                edge_attrs, dtype=torch.float32
-            )
+            data[source_type, edge_type.value, target_type].edge_attr = torch.tensor(edge_attrs, dtype=torch.float32)
 
         return data
 
@@ -428,11 +420,11 @@ class HeterogeneousGraph:
         try:
             import networkx as nx
 
-            G = nx.MultiGraph()
+            graph_nx = nx.MultiGraph()
 
             # Add nodes
             for node_id, node in self.nodes.items():
-                G.add_node(
+                graph_nx.add_node(
                     node_id,
                     node_type=node.node_type.value,
                     **node.metadata,
@@ -440,7 +432,7 @@ class HeterogeneousGraph:
 
             # Add edges
             for edge in self.edges:
-                G.add_edge(
+                graph_nx.add_edge(
                     edge.source,
                     edge.target,
                     edge_type=edge.edge_type.value,
@@ -448,7 +440,7 @@ class HeterogeneousGraph:
                     **edge.metadata,
                 )
 
-            return G
+            return graph_nx
 
         except ImportError:
             logger.warning("NetworkX not available. Returning None.")
@@ -459,11 +451,7 @@ class HeterogeneousGraph:
         return {
             "num_nodes": len(self.nodes),
             "num_edges": len(self.edges),
-            "nodes_by_type": {
-                nt.value: len(ids) for nt, ids in self.node_type_index.items()
-            },
-            "edges_by_type": {
-                et.value: len(edges) for et, edges in self.edge_type_index.items()
-            },
+            "nodes_by_type": {nt.value: len(ids) for nt, ids in self.node_type_index.items()},
+            "edges_by_type": {et.value: len(edges) for et, edges in self.edge_type_index.items()},
             "feature_dim": self.node_feature_dim,
         }

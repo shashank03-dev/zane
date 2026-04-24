@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Optional
+from typing import Any
 
 import numpy as np
 
@@ -21,8 +21,9 @@ logger = logging.getLogger(__name__)
 
 # Optional imports with fallback
 try:
-    import scanpy as sc
     import anndata as ad
+    import scanpy as sc
+
     SCANPY_AVAILABLE = True
 except ImportError:
     SCANPY_AVAILABLE = False
@@ -32,6 +33,7 @@ except ImportError:
 
 try:
     import squidpy as sq
+
     SQUIDPY_AVAILABLE = True
 except ImportError:
     SQUIDPY_AVAILABLE = False
@@ -184,7 +186,7 @@ class SingleCellLoader:
                 sc.pp.highly_variable_genes(
                     adata,
                     n_top_genes=self.n_top_genes,
-                    flavor="seurat_v3" if hasattr(sc.pp, 'highly_variable_genes') else "seurat"
+                    flavor="seurat_v3" if hasattr(sc.pp, "highly_variable_genes") else "seurat",
                 )
                 adata = adata[:, adata.var.highly_variable]
 
@@ -210,13 +212,12 @@ class SingleCellLoader:
         cells = []
 
         try:
-            obs_names = adata.obs_names.tolist() if hasattr(adata.obs_names, 'tolist') else list(adata.obs_names)
-            var_names = adata.var_names.tolist() if hasattr(adata.var_names, 'tolist') else list(adata.var_names)
+            obs_names = adata.obs_names.tolist() if hasattr(adata.obs_names, "tolist") else list(adata.obs_names)
 
             for i, cell_id in enumerate(obs_names):
                 # Gene expression
-                expr = adata.X[i] if hasattr(adata.X, '__getitem__') else adata.X[i, :]
-                if hasattr(expr, 'toarray'):
+                expr = adata.x_data[i] if hasattr(adata.x_data, "__getitem__") else adata.x_data[i, :]
+                if hasattr(expr, "toarray"):
                     expr = expr.toarray().flatten()
                 else:
                     expr = np.array(expr).flatten()
@@ -249,11 +250,13 @@ class SingleCellLoader:
             logger.warning(f"Failed to extract cell data: {e}")
             # Return mock data
             for i in range(min(100, len(cells) if cells else 100)):
-                cells.append(CellData(
-                    cell_id=f"cell_{i}",
-                    cell_type="mock_type",
-                    gene_expression=np.random.randn(self.n_top_genes or 100),
-                ))
+                cells.append(
+                    CellData(
+                        cell_id=f"cell_{i}",
+                        cell_type="mock_type",
+                        gene_expression=np.random.randn(self.n_top_genes or 100),
+                    )
+                )
 
         return cells
 
@@ -262,14 +265,14 @@ class SingleCellLoader:
         n_cells = 500
         n_genes = self.n_top_genes or 100
 
-        X = np.random.randn(n_cells, n_genes)
+        x_data = np.random.randn(n_cells, n_genes)
         obs = {"cell_type": np.random.choice(["T_cell", "B_cell", "Macrophage", "Fibroblast"], n_cells)}
 
         if SCANPY_AVAILABLE and ad is not None:
-            return ad.AnnData(X=X, obs=obs)
+            return ad.AnnData(x_data=x_data, obs=obs)
         else:
             # Simple dict mock
-            return {"X": X, "obs": obs}
+            return {"x_data": x_data, "obs": obs}
 
 
 class SpatialTranscriptomicsLoader:
@@ -398,7 +401,7 @@ class SpatialTranscriptomicsLoader:
         # K-nearest neighbors
         adj = np.zeros((n, n), dtype=bool)
         for i in range(n):
-            nearest = np.argsort(distances[i])[:self.n_neighbors + 1]
+            nearest = np.argsort(distances[i])[: self.n_neighbors + 1]
             for j in nearest:
                 if i != j:
                     adj[i, j] = True
@@ -414,15 +417,13 @@ class SpatialTranscriptomicsLoader:
         n_cells = 500
         n_genes = 100
 
-        X = np.random.randn(n_cells, n_genes)
+        x_data = np.random.randn(n_cells, n_genes)
         coords = np.random.rand(n_cells, 2) * 100  # 100x100 micron area
 
         if SCANPY_AVAILABLE and ad is not None:
-            adata = ad.AnnData(X=X)
+            adata = ad.AnnData(x_data=x_data)
             adata.obsm["spatial"] = coords
-            adata.obs["cell_type"] = np.random.choice(
-                ["T_cell", "B_cell", "Macrophage", "Fibroblast"], n_cells
-            )
+            adata.obs["cell_type"] = np.random.choice(["T_cell", "B_cell", "Macrophage", "Fibroblast"], n_cells)
             return adata
         else:
-            return {"X": X, "spatial": coords}
+            return {"x_data": x_data, "spatial": coords}

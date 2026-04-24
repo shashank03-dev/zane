@@ -21,10 +21,14 @@ def train_nvidia_pubchem(
 ):
     print(f"Collecting up to {limit} records from PubChem...")
     collector = DataCollector()
-    df = collector.collect_from_pubchem(limit=limit)
+    df = collector.collect_from_pubchem(query="aspirin", limit=limit)
 
     if df.empty:
-        print("No data collected from PubChem. Exiting.")
+        print("No data collected from PubChem. Falling back to built-in approved drugs...")
+        df = collector.collect_approved_drugs()
+
+    if df.empty:
+        print("No data collected at all. Exiting.")
         return
 
     # We only care about the SMILES strings for causal language modeling

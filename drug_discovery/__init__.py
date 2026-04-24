@@ -348,3 +348,29 @@ try:
     )
 except Exception:
     pass
+
+# ── Tier 22: Omega Protocol & Trans-Physical Optimization ───────────────────
+try:
+    from drug_discovery.genomics import HostRefactorer as HostRefactorer
+    from drug_discovery.omega_protocol import OmegaProtocol as OmegaProtocol
+    from drug_discovery.quantum_grid import (
+        CislunarOrchestrator as CislunarOrchestrator,
+    )
+    from drug_discovery.quantum_grid import (
+        EntanglementTelemetry as EntanglementTelemetry,
+    )
+    from drug_discovery.reality_optimizer import RealityOptimizer as RealityOptimizer
+    from drug_discovery.temporal import TemporalComputer as TemporalComputer
+
+    __all__.extend(
+        [
+            "OmegaProtocol",
+            "CislunarOrchestrator",
+            "EntanglementTelemetry",
+            "HostRefactorer",
+            "TemporalComputer",
+            "RealityOptimizer",
+        ]
+    )
+except Exception:
+    pass

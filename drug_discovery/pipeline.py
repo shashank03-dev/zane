@@ -770,3 +770,10 @@ class DrugDiscoveryPipeline:
 
         engine = SingularityEngine()
         return await engine.execute_singularity_workflow({"name": drug_name})
+
+    def run_omega_protocol(self, target_pathology: str) -> dict[str, Any]:
+        """Execute the final Tier 22 Omega Protocol (Modules 19-22)."""
+        from .omega_protocol import OmegaProtocol
+
+        protocol = OmegaProtocol()
+        return protocol.execute_omega_workflow(target_pathology)

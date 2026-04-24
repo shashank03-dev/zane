@@ -307,6 +307,34 @@ INTEGRATIONS: dict[str, IntegrationSpec] = {
         url="https://github.com/Farama-Foundation/PettingZoo",
         python_modules=("pettingzoo",),
     ),
+    "qiskit": IntegrationSpec(
+        key="qiskit",
+        name="Qiskit",
+        purpose="Quantum computing framework",
+        url="https://github.com/Qiskit/qiskit",
+        python_modules=("qiskit",),
+    ),
+    "poliastro": IntegrationSpec(
+        key="poliastro",
+        name="poliastro",
+        purpose="Astrodynamics in Python",
+        url="https://github.com/poliastro/poliastro",
+        python_modules=("poliastro",),
+    ),
+    "cirq": IntegrationSpec(
+        key="cirq",
+        name="Cirq",
+        purpose="Quantum circuit programming",
+        url="https://github.com/quantumlib/Cirq",
+        python_modules=("cirq",),
+    ),
+    "qutip": IntegrationSpec(
+        key="qutip",
+        name="QuTiP",
+        purpose="Quantum Toolbox in Python",
+        url="https://github.com/qutip/qutip",
+        python_modules=("qutip",),
+    ),
 }
 
 

@@ -377,6 +377,10 @@ def main():
     # Nanobotics command
     subparsers.add_parser("train-swarm", help="Train nanobot swarm intelligence")
 
+    # Omega Protocol command
+    omega_parser = subparsers.add_parser("omega-run", help="Run final Tier 22 Omega Protocol")
+    omega_parser.add_argument("pathology", help="Target pathology to refactor")
+
     args = parser.parse_args()
 
     if args.command == "predict":
@@ -431,6 +435,8 @@ def main():
         run_simulate_aging(args)
     elif args.command == "train-swarm":
         run_train_swarm(args)
+    elif args.command == "omega-run":
+        run_omega_protocol(args)
     else:
         parser.print_help()
 
@@ -936,6 +942,17 @@ def run_train_swarm(args):
     pipeline = DrugDiscoveryPipeline()
     result = pipeline.train_nanobot_swarm()
     print("\nNanobot Swarm Training Result:")
+    print(json.dumps(result, indent=2))
+
+
+def run_omega_protocol(args):
+    """Run Tier 22 Omega Protocol."""
+    from drug_discovery import DrugDiscoveryPipeline
+
+    pipeline = DrugDiscoveryPipeline()
+    print(f"INITIATING OMEGA PROTOCOL FOR: {args.pathology}...")
+    result = pipeline.run_omega_protocol(args.pathology)
+    print("\nOmega Protocol Completed:")
     print(json.dumps(result, indent=2))
 
 

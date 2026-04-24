@@ -254,6 +254,27 @@ python -m drug_discovery.cli physics-gen \
   --known-smiles "CCO" "CCN"
 ```
 
+### 3.8 Elite Scientific Validation Protocols (Tier 22 Compliance)
+
+ZANE implements 10 elite validation protocols to ensure the scientific rigor, safety, and physical realism of discovery workflows. These protocols bridge the gap between AI predictions and biological/physical reality.
+
+1.  **SAscore Reality Check**: Validates synthetic accessibility and structural realism against drug-like reference distributions.
+2.  **FEP Convergence Test**: Ensures Free Energy Perturbation simulations have reached statistical convergence for rigorous ΔG estimates.
+3.  **ZNE Fidelity Audit (QML)**: Audits Zero-Noise Extrapolation accuracy in Quantum ML modules to correct for hardware decoherence.
+4.  **Pan-omic Butterfly Effect (Toxicity)**: Measures the sensitivity of multi-omic response layers to minute structural perturbations.
+5.  **LNP Stress Test**: Simulates Lipid Nanoparticle stability surfaces across varying temperature, pH, and ionic strength gradients.
+6.  **Neuromorphic Spiking Avalanche (CNS Safety)**: Assesses CNS safety by monitoring neuronal avalanche criticality in spiking neural networks.
+7.  **Epigenetic Clock Degradation**: Predicts drug-induced acceleration or deceleration of biological aging using Horvath-style clocks.
+8.  **Homomorphic Encryption Pen-test**: Validates the noise budget and security of computations performed on encrypted molecular data.
+9.  **Microgravity Phase Separation**: Simulates phase separation kinetics and protein crystallization behavior in orbital environments.
+10. **Agentic Hallucination & Compliance Audit**: Multi-agent audit of AI-generated synthesis steps and toxicity interpretations for factual accuracy.
+
+Run the full validation suite:
+
+```bash
+python -m drug_discovery.validation.elite_protocols
+```
+
 ### 3A. Scientific Visualization Atlas (2026-04)
 
 The latest analytical figures are generated from the curated JSON artifacts under `outputs/reports/` (transformer benchmark, GNN validation, and protocol GNN runs). All figures are deterministic and reproducible from those artifacts.

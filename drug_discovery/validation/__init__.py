@@ -2,6 +2,9 @@
 
 __all__ = []
 try:
+    from drug_discovery.validation.elite_protocols import (
+        EliteValidationSuite as EliteValidationSuite,
+    )
     from drug_discovery.validation.scientific_validation import (
         CLASSIFICATION_METRICS as CLASSIFICATION_METRICS,
     )
@@ -49,6 +52,7 @@ try:
             "ExperimentReport",
             "REGRESSION_METRICS",
             "CLASSIFICATION_METRICS",
+            "EliteValidationSuite",
         ]
     )
 except ImportError:

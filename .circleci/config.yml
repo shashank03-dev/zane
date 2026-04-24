@@ -1,0 +1,96 @@
+version: 2.1
+orbs:
+  python: circleci/python@2
+jobs:
+  test-go:
+    docker:
+      - image: cimg/go:1.20
+    working_directory: ~/project/tools/go/fastsearch
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Run tests
+          command: gotestsum --junitfile junit.xml
+      - store_test_results:
+          path: junit.xml
+  build-go-executables:
+    docker:
+      - image: cimg/go:1.20
+    steps:
+      - checkout:
+          path: ~/project
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      - run:
+          name: Build executables
+          command: go build -o ~/artifacts ./...
+      - store_artifacts:
+          path: ~/artifacts
+          destination: executables
+  test-python:
+    docker:
+      - image: cimg/python:3.8-node
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip-dist
+      - run:
+          name: Run tests
+          command: pytest --junitxml=junit.xml || ((($? == 5)) && echo 'Did not find any tests to run.')
+      - store_test_results:
+          path: junit.xml
+  build-package:
+    docker:
+      - image: cimg/python:3.8-node
+    steps:
+      - checkout
+      - run:
+          name: Create the ~/artifacts directory if it doesn't exist
+          command: mkdir -p ~/artifacts
+      - python/dist
+      - store_artifacts:
+          path: dist
+          destination: ~/artifacts
+  deploy:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - run:
+          name: deploy
+          command: '#e.g. ./deploy.sh'
+      - run:
+          name: found github actions config
+          command: ':'
+  test-playwright:
+    docker:
+      - image: cimg/node:lts
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: npm install
+      - run:
+          name: Run Playwright tests
+          command: |
+            mkdir test-results
+            pnpm run serve &
+            TESTFILES=$(circleci tests glob "specs/e2e/**/*.spec.ts")
+            echo "$TESTFILES" | circleci tests run --command="xargs pnpm playwright test --config=playwright.config.ci.ts --reporter=junit" --verbose --split-by=timings
+      - store_test_results:
+          path: test-results
+workflows:
+  build-and-test:
+    jobs:
+      - test-go
+      - build-go-executables:
+          requires:
+            - test-go
+            - test-python
+      - test-python
+      - build-package:
+          requires:
+            - test-go
+            - test-python
+      - test-playwright
